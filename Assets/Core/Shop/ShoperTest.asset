@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c31b31b140aeb49a74ee5fa7819613, type: 3}
+  m_Name: ShoperTest
+  m_EditorClassIdentifier: 
+  name: 
+  description: 
+  image: {fileID: 21300000, guid: c5c9d4718a074ca4e8d7c6c6fb25c1c7, type: 3}
+  cards:
+  - {fileID: 11400000, guid: a50d333d938dbb9489fec77ae70e241a, type: 2}
+  - {fileID: 11400000, guid: b042dd5dfb488e741b05e95707ecc586, type: 2}
+  - {fileID: 11400000, guid: 2233f8b52e92cac478cde3e42f5ffcfc, type: 2}
+  - {fileID: 11400000, guid: 9e364a49127bc984fa714c2082e85171, type: 2}
+  - {fileID: 11400000, guid: c8f993faf6b3fa145a38171a2aa19ed2, type: 2}
+  - {fileID: 11400000, guid: 150488966f7302c478e1e3331c59a09d, type: 2}
+  - {fileID: 11400000, guid: f475f95c7c3403543a65a91dfd4e0d3e, type: 2}
+  - {fileID: 11400000, guid: e78fa9888ea7fc3429d2fb76914d317f, type: 2}
+  - {fileID: 11400000, guid: 8cff5de0e61ea724cb9200cd6a502226, type: 2}
