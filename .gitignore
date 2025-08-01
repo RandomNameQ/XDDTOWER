@@ -118,6 +118,7 @@ fmod_editor.log
 # Unity meta files
 *.meta
 *.mat
+*.prefab
 *.asset.meta
 
 

@@ -26,7 +26,6 @@ public class RandomManager : Singleton<RandomManager>
 
     public float Range(float min, float max)
     {
-        Random.InitState(_seed);
         return Random.Range(min, max);
     }
 
