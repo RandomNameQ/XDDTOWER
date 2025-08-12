@@ -1,16 +1,33 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    // надо засетапить чтобы персонаж мог ходить по карте
+
+    public Sprite image;
+    public CellData position;
+    public CellData previousPosition;
+
+
+    private void Start()
     {
-        
+
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ChangePositionOnMap(CellData newPosition)
     {
-        
+        previousPosition = position;
+        if (previousPosition != null)
+        {
+            previousPosition.UpdatePreviousPosition();
+
+
+        }
+
+
+        position = newPosition;
+        position.ChangePosition();
     }
+
 }

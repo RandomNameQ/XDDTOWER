@@ -1,351 +1,290 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static InputSystem_Actions;
+using static UnityEngine.InputSystem.InputAction;
 
-public class InputManager : MonoBehaviour, InputSystem_Actions.IPlayerActions, InputSystem_Actions.IUIActions
+/// <summary>
+/// Менеджер ввода для новой системы ввода Unity.
+/// Реализован как синглтон для глобального доступа.
+/// </summary>
+public class InputManager : Singleton<InputManager>, IPlayerActions, IUIActions
 {
-    // Синглтон-экземпляр
-    private static InputManager _instance;
-    public static InputManager Instance => _instance;
+    #region Singleton
 
-    // Действия ввода
+
+
+    #endregion
+
+    #region Fields
+
     private InputSystem_Actions _inputActions;
-    public InputSystem_Actions InputActions => _inputActions;
-
-    // Состояние карт действий
-    private bool _playerActionsEnabled = true;
-    private bool _uiActionsEnabled = true;
-
-    #region События Player Actions
-
-    // События для Player Actions (не статические)
-    public event Action<Vector2> OnMoveEvent;
-    public event Action<Vector2> OnLookEvent;
-    public event Action OnAttackEvent;
-    public event Action OnAttackCanceledEvent;
-    public event Action OnInteractEvent;
-    public event Action OnInteractCanceledEvent;
-    public event Action OnCrouchEvent;
-    public event Action OnCrouchCanceledEvent;
-    public event Action OnJumpEvent;
-    public event Action OnJumpCanceledEvent;
-    public event Action OnPreviousEvent;
-    public event Action OnNextEvent;
-    public event Action OnSprintEvent;
-    public event Action OnSprintCanceledEvent;
+    private bool _isPlayerMapActive;
+    private bool _isUIMapActive;
 
     #endregion
 
-    #region События UI Actions
+    #region Properties
 
-    // События для UI Actions (не статические)
-    public event Action<Vector2> OnNavigateEvent;
-    public event Action OnSubmitEvent;
-    public event Action OnCancelEvent;
-    public event Action<Vector2> OnPointEvent;
-    public event Action OnLeftClickEvent;
-    public event Action OnLeftClickCanceledEvent;
-    public event Action OnRightClickEvent;
-    public event Action OnMiddleClickEvent;
-    public event Action<Vector2> OnScrollWheelEvent;
+    public Vector2 MousePosition => _inputActions.Player.Point.ReadValue<Vector2>();
+    public bool IsPlayerMapActive => _isPlayerMapActive;
+    public bool IsUIMapActive => _isUIMapActive;
 
     #endregion
 
-    // Свойства для получения текущего состояния ввода
-    public Vector2 MoveInput { get; private set; }
-    public Vector2 LookInput { get; private set; }
-    public bool IsAttacking { get; private set; }
-    public bool IsInteracting { get; private set; }
-    public bool IsCrouching { get; private set; }
-    public bool IsJumping { get; private set; }
-    public bool IsSprinting { get; private set; }
+    #region Events
 
-    private void Awake()
+    // Player Events
+    public event Action<CallbackContext> OnNavigate;
+    public event Action<CallbackContext> OnSubmit;
+    public event Action<CallbackContext> OnCancel;
+    public event Action<CallbackContext> OnPoint;
+    public event Action<CallbackContext> OnClick;
+    public event Action<CallbackContext> OnRightClick;
+    public event Action<CallbackContext> OnMiddleClick;
+    public event Action<CallbackContext> OnScrollWheel;
+    public event Action<CallbackContext> OnTrackedDevicePosition;
+    public event Action<CallbackContext> OnTrackedDeviceOrientation;
+
+    // UI Events
+    public event Action<CallbackContext> OnUINavigate;
+    public event Action<CallbackContext> OnUISubmit;
+    public event Action<CallbackContext> OnUICancel;
+    public event Action<CallbackContext> OnUIPoint;
+    public event Action<CallbackContext> OnUIClick;
+    public event Action<CallbackContext> OnUIRightClick;
+    public event Action<CallbackContext> OnUIMiddleClick;
+    public event Action<CallbackContext> OnUIScrollWheel;
+    public event Action<CallbackContext> OnUITrackedDevicePosition;
+    public event Action<CallbackContext> OnUITrackedDeviceOrientation;
+
+    #endregion
+
+    #region Unity Lifecycle
+
+    private new void Awake()
     {
-        // Проверка на дубликаты синглтона
-        if (_instance != null && _instance != this)
-        {
-            Debug.Log("InputManager already exists");
-            Destroy(gameObject);
-            return;
-        }
-
-        _instance = this;
-        // DontDestroyOnLoad(gameObject);
-
-        // Инициализация действий ввода
-        _inputActions = new InputSystem_Actions();
-        _inputActions.Player.SetCallbacks(this);
-        _inputActions.UI.SetCallbacks(this);
+        base.Awake();
+        DontDestroyOnLoad(gameObject);
+        InitializeInputSystem();
     }
 
     private void OnEnable()
     {
-        EnableAllActions();
+        EnablePlayerControls();
     }
 
     private void OnDisable()
     {
-        DisableAllActions();
+        DisableAllControls();
     }
 
-    #region Управление картами действий
-
-    public void EnableAllActions()
+    private new void OnDestroy()
     {
-        _inputActions.Enable();
-        _playerActionsEnabled = true;
-        _uiActionsEnabled = true;
+        base.OnDestroy();
+        if (_inputActions != null)
+        {
+            DisableAllControls();
+            _inputActions.Dispose();
+        }
     }
 
-    public void DisableAllActions()
+    #endregion
+
+    #region Initialization
+
+    private void InitializeInputSystem()
     {
-        _inputActions.Disable();
-        _playerActionsEnabled = false;
-        _uiActionsEnabled = false;
+        _inputActions = new InputSystem_Actions();
+
+        // Регистрация обратных вызовов
+        _inputActions.Player.SetCallbacks(this);
+        _inputActions.UI.SetCallbacks(this);
     }
 
-    public void EnablePlayerActions()
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// Включает управление игрока и отключает управление UI
+    /// </summary>
+    public void EnablePlayerControls()
     {
         _inputActions.Player.Enable();
-        _playerActionsEnabled = true;
+        _inputActions.UI.Disable();
+        _isPlayerMapActive = true;
+        _isUIMapActive = false;
     }
 
-    public void DisablePlayerActions()
-    {
-        _inputActions.Player.Disable();
-        _playerActionsEnabled = false;
-    }
-
-    public void EnableUIActions()
+    /// <summary>
+    /// Включает управление UI и отключает управление игрока
+    /// </summary>
+    public void EnableUIControls()
     {
         _inputActions.UI.Enable();
-        _uiActionsEnabled = true;
+        _inputActions.Player.Disable();
+        _isUIMapActive = true;
+        _isPlayerMapActive = false;
     }
 
-    public void DisableUIActions()
+    /// <summary>
+    /// Включает оба набора управления
+    /// </summary>
+    public void EnableAllControls()
     {
+        _inputActions.Player.Enable();
+        _inputActions.UI.Enable();
+        _isPlayerMapActive = true;
+        _isUIMapActive = true;
+    }
+
+    /// <summary>
+    /// Отключает все управление
+    /// </summary>
+    public void DisableAllControls()
+    {
+        _inputActions.Player.Disable();
         _inputActions.UI.Disable();
-        _uiActionsEnabled = false;
+        _isPlayerMapActive = false;
+        _isUIMapActive = false;
     }
 
-    public bool ArePlayerActionsEnabled() => _playerActionsEnabled;
-    public bool AreUIActionsEnabled() => _uiActionsEnabled;
-
-    #endregion
-
-    #region Методы для IPlayerActions
-
-    public void OnMove(InputAction.CallbackContext context)
+    /// <summary>
+    /// Проверяет, нажата ли кнопка мыши
+    /// </summary>
+    /// <returns>true, если кнопка мыши нажата</returns>
+    public bool IsMouseButtonPressed()
     {
-        MoveInput = context.ReadValue<Vector2>();
-        OnMoveEvent?.Invoke(MoveInput);
+        return _inputActions.Player.Click.IsPressed();
     }
 
-    public void OnLook(InputAction.CallbackContext context)
+    /// <summary>
+    /// Проверяет, нажата ли правая кнопка мыши
+    /// </summary>
+    /// <returns>true, если правая кнопка мыши нажата</returns>
+    public bool IsRightMouseButtonPressed()
     {
-        LookInput = context.ReadValue<Vector2>();
-        OnLookEvent?.Invoke(LookInput);
+        return _inputActions.Player.RightClick.IsPressed();
     }
 
-    public void OnAttack(InputAction.CallbackContext context)
+    /// <summary>
+    /// Получает текущее значение скроллинга
+    /// </summary>
+    /// <returns>Значение скроллинга как Vector2</returns>
+    public Vector2 GetScrollValue()
     {
-        if (context.performed)
-        {
-            IsAttacking = true;
-            OnAttackEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            IsAttacking = false;
-            OnAttackCanceledEvent?.Invoke();
-        }
-    }
-
-    public void OnInteract(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            IsInteracting = true;
-            OnInteractEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            IsInteracting = false;
-            OnInteractCanceledEvent?.Invoke();
-        }
-    }
-
-    public void OnCrouch(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            IsCrouching = true;
-            OnCrouchEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            IsCrouching = false;
-            OnCrouchCanceledEvent?.Invoke();
-        }
-    }
-
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            IsJumping = true;
-            OnJumpEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            IsJumping = false;
-            OnJumpCanceledEvent?.Invoke();
-        }
-    }
-
-    public void OnPrevious(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            OnPreviousEvent?.Invoke();
-        }
-    }
-
-    public void OnNext(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            OnNextEvent?.Invoke();
-        }
-    }
-
-    public void OnSprint(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            IsSprinting = true;
-            OnSprintEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            IsSprinting = false;
-            OnSprintCanceledEvent?.Invoke();
-        }
+        return _inputActions.Player.ScrollWheel.ReadValue<Vector2>();
     }
 
     #endregion
 
-    #region Методы для IUIActions
+    #region IPlayerActions Implementation
 
-    public void OnNavigate(InputAction.CallbackContext context)
+    void IPlayerActions.OnNavigate(InputAction.CallbackContext context)
     {
-        OnNavigateEvent?.Invoke(context.ReadValue<Vector2>());
+        OnNavigate?.Invoke(context);
     }
 
-    public void OnSubmit(InputAction.CallbackContext context)
+    void IPlayerActions.OnSubmit(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnSubmitEvent?.Invoke();
-        }
+        OnSubmit?.Invoke(context);
     }
 
-    public void OnCancel(InputAction.CallbackContext context)
+    void IPlayerActions.OnCancel(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnCancelEvent?.Invoke();
-        }
+        OnCancel?.Invoke(context);
     }
 
-    public void OnPoint(InputAction.CallbackContext context)
+    void IPlayerActions.OnPoint(InputAction.CallbackContext context)
     {
-        OnPointEvent?.Invoke(context.ReadValue<Vector2>());
+        OnPoint?.Invoke(context);
     }
 
-    public void OnClick(InputAction.CallbackContext context)
+    void IPlayerActions.OnClick(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnLeftClickEvent?.Invoke();
-        }
-        else if (context.canceled)
-        {
-            OnLeftClickCanceledEvent?.Invoke();
-        }
+        OnClick?.Invoke(context);
     }
 
-    public void OnRightClick(InputAction.CallbackContext context)
+    void IPlayerActions.OnRightClick(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnRightClickEvent?.Invoke();
-        }
+        OnRightClick?.Invoke(context);
     }
 
-    public void OnMiddleClick(InputAction.CallbackContext context)
+    void IPlayerActions.OnMiddleClick(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnMiddleClickEvent?.Invoke();
-        }
+        OnMiddleClick?.Invoke(context);
     }
 
-    public void OnScrollWheel(InputAction.CallbackContext context)
+    void IPlayerActions.OnScrollWheel(InputAction.CallbackContext context)
     {
-        OnScrollWheelEvent?.Invoke(context.ReadValue<Vector2>());
+        OnScrollWheel?.Invoke(context);
     }
 
-    public void OnTrackedDevicePosition(InputAction.CallbackContext context)
+    void IPlayerActions.OnTrackedDevicePosition(InputAction.CallbackContext context)
     {
-        // Не используется в данной реализации
+        OnTrackedDevicePosition?.Invoke(context);
     }
 
-    public void OnTrackedDeviceOrientation(InputAction.CallbackContext context)
+    void IPlayerActions.OnTrackedDeviceOrientation(InputAction.CallbackContext context)
     {
-        // Не используется в данной реализации
+        OnTrackedDeviceOrientation?.Invoke(context);
     }
 
     #endregion
 
-    #region Вспомогательные методы для проверки состояния ввода
+    #region IUIActions Implementation
 
-    // Методы для проверки состояния кнопок
-    public bool GetMouse1ButtonDown() => _inputActions.Player.Mouse1.WasPressedThisFrame();
-    public bool GetMouse1Button() => _inputActions.Player.Mouse1.IsPressed();
-    public bool GetMouse2ButtonDown() => _inputActions.Player.Mouse2.WasPressedThisFrame();
-    public bool GetMouse2Button() => _inputActions.Player.Mouse2.IsPressed();
-    public bool GetJumpButtonDown() => _inputActions.Player.Jump.WasPressedThisFrame();
-    public bool GetJumpButton() => _inputActions.Player.Jump.IsPressed();
-    public bool GetInteractButtonDown() => _inputActions.Player.Interact.WasPressedThisFrame();
-    public bool GetInteractButton() => _inputActions.Player.Interact.IsPressed();
-    public bool GetSprintButtonDown() => _inputActions.Player.Sprint.WasPressedThisFrame();
-    public bool GetSprintButton() => _inputActions.Player.Sprint.IsPressed();
-    public bool GetPreviousButtonDown() => _inputActions.Player.Previous.WasPressedThisFrame();
-    public bool GetNextButtonDown() => _inputActions.Player.Next.WasPressedThisFrame();
-    public bool GetCrouchButtonDown() => _inputActions.Player.Crouch.WasPressedThisFrame();
-    public bool GetCrouchButton() => _inputActions.Player.Crouch.IsPressed();
-
-    // Получение векторов движения и взгляда
-    public Vector2 GetMoveVector() => MoveInput;
-    public Vector2 GetLookVector() => LookInput;
-
-    public void OnMouse1(InputAction.CallbackContext context)
+    void IUIActions.OnNavigate(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnLeftClickEvent?.Invoke();
-        }
+        OnUINavigate?.Invoke(context);
     }
 
-    public void OnMouse2(InputAction.CallbackContext context)
+    void IUIActions.OnSubmit(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            OnRightClickEvent?.Invoke();
-        }
+        OnUISubmit?.Invoke(context);
+    }
+
+    void IUIActions.OnCancel(InputAction.CallbackContext context)
+    {
+        OnUICancel?.Invoke(context);
+    }
+
+    void IUIActions.OnPoint(InputAction.CallbackContext context)
+    {
+        OnUIPoint?.Invoke(context);
+    }
+
+    void IUIActions.OnClick(InputAction.CallbackContext context)
+    {
+        OnUIClick?.Invoke(context);
+    }
+
+    void IUIActions.OnRightClick(InputAction.CallbackContext context)
+    {
+        OnUIRightClick?.Invoke(context);
+    }
+
+    void IUIActions.OnMiddleClick(InputAction.CallbackContext context)
+    {
+        OnUIMiddleClick?.Invoke(context);
+    }
+
+    void IUIActions.OnScrollWheel(InputAction.CallbackContext context)
+    {
+        OnUIScrollWheel?.Invoke(context);
+    }
+
+    void IUIActions.OnTrackedDevicePosition(InputAction.CallbackContext context)
+    {
+        OnUITrackedDevicePosition?.Invoke(context);
+    }
+
+    void IUIActions.OnTrackedDeviceOrientation(InputAction.CallbackContext context)
+    {
+        OnUITrackedDeviceOrientation?.Invoke(context);
     }
 
     #endregion
+
 }

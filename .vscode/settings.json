@@ -66,5 +66,6 @@
         "Packages": true,
         "XDDTOWER.sln": true
     },
-    "dotnet.defaultSolution": "XDDTOWER.sln"
+    "dotnet.defaultSolution": "XDDTOWER.sln",
+    "dotnet.preferCSharpExtension": true
 }

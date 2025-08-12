@@ -1,0 +1,17 @@
+{
+    "name": "LastOne",
+    "rootNamespace": "",
+    "references": [
+        "GUID:c95983e476f9b3c4a8d77ccdb0bb485d",
+        "GUID:5bf74de5615fab6458686d41a1a25157"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

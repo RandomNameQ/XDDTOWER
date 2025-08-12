@@ -68,12 +68,12 @@ public class ShopBase : MonoBehaviour
         {
             for (int i = 0; i < countCards; i++)
             {
-                if (RandomManager.Q == null)
+                if (RandomManager.Instance == null)
                 {
                     Debug.LogError("RandomManager is not initialized");
                     return;
                 }
-                CardData card = shopBase.shopperData.cards[RandomManager.Q.Range(0, shopBase.shopperData.cards.Count)];
+                CardData card = shopBase.shopperData.cards[RandomManager.Instance.Range(0, shopBase.shopperData.cards.Count)];
                 if (!choosenCards.Contains(card))
                 {
                     choosenCards.Add(card);
@@ -122,46 +122,46 @@ public class ShopBase : MonoBehaviour
 
     public void TryBuyCard()
     {
-        // потом добавить проверку на ресурсы, проверка на есть ли место в инвентаре, и сделать уфнкцию для добавления карты в сводобное место инвантаря
-        if (selectedCard != null)
-        {
-            var shopCardData = selectedCard.GetComponent<ItemSlot_Shop>().cardData;
+        // // потом добавить проверку на ресурсы, проверка на есть ли место в инвентаре, и сделать уфнкцию для добавления карты в сводобное место инвантаря
+        // if (selectedCard != null)
+        // {
+        //     var shopCardData = selectedCard.GetComponent<ItemSlot_Shop>().cardData;
 
-            List<BoardGrid> boards = FindObjectsByType<BoardGrid>(FindObjectsSortMode.None).ToList();
-            BoardGrid playerInventory = boards.Where<BoardGrid>(x => x.boardType == BoardType.PlayerInventory).FirstOrDefault();
-            BoardGrid gameBoard = boards.Where<BoardGrid>(x => x.boardType == BoardType.GameBoard).FirstOrDefault();
+        //     List<BoardGrid> boards = FindObjectsByType<BoardGrid>(FindObjectsSortMode.None).ToList();
+        //     BoardGrid playerInventory = boards.Where<BoardGrid>(x => x.boardType == BoardType.PlayerInventory).FirstOrDefault();
+        //     BoardGrid gameBoard = boards.Where<BoardGrid>(x => x.boardType == BoardType.GameBoard).FirstOrDefault();
 
-            List<Vector3Int> freePositions = playerInventory.FindFreePositions(shopCardData.sizeX, shopCardData.sizeZ);
-            if (freePositions.Count > 0)
-            {
-                var card = CreateCardBody();
-                playerInventory.TryPlaceCardAtPositions(card, freePositions);
-                return;
-            }
+        //     List<Vector3Int> freePositions = playerInventory.FindFreePositions(shopCardData.sizeX, shopCardData.sizeZ);
+        //     if (freePositions.Count > 0)
+        //     {
+        //         var card = CreateCardBody();
+        //         playerInventory.TryPlaceCardAtPositions(card, freePositions);
+        //         return;
+        //     }
 
-            freePositions = gameBoard.FindFreePositions(shopCardData.sizeX, shopCardData.sizeZ);
-            if (freePositions.Count > 0)
-            {
-                var card = CreateCardBody();
+        //     freePositions = gameBoard.FindFreePositions(shopCardData.sizeX, shopCardData.sizeZ);
+        //     if (freePositions.Count > 0)
+        //     {
+        //         var card = CreateCardBody();
 
-                gameBoard.TryPlaceCardAtPositions(card, freePositions);
-            }
+        //         gameBoard.TryPlaceCardAtPositions(card, freePositions);
+        //     }
 
-        }
+        // }
     }
 
-    public GameObject CreateCardBody()
-    {
-        var body = Instantiate(cardBodyPrefab).GetComponent<PawnCreature>();
-        var shopCardData = selectedCard.GetComponent<ItemSlot_Shop>().cardData;
+    // public GameObject CreateCardBody()
+    // {
+    //     var body = Instantiate(cardBodyPrefab).GetComponent<PawnCreature>();
+    //     var shopCardData = selectedCard.GetComponent<ItemSlot_Shop>().cardData;
 
-        body.cardData = shopCardData;
-        body.name = shopCardData.name;
+    //     body.cardData = shopCardData;
+    //     body.name = shopCardData.name;
 
-        body.Init();
+    //     body.Init();
 
-        return body.gameObject;
-    }
+    //     return body.gameObject;
+    // }
 
 
     public void SelectCardInShop(GameObject card)

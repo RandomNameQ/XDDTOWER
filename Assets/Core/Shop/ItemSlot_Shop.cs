@@ -20,7 +20,7 @@ public class ItemSlot_Shop : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         if (InputManager.Instance != null)
         {
-            InputManager.Instance.InputActions.Player.Mouse1.performed += SelectCard;
+            InputManager.Instance.OnClick += SelectCard;
         }
         else
         {
@@ -28,24 +28,15 @@ public class ItemSlot_Shop : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         }
     }
 
-    private void OnEnable()
-    {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.InputActions.Player.Mouse1.performed += SelectCard;
-        }
-    }
-
     private void OnDisable()
     {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.InputActions.Player.Mouse1.performed -= SelectCard;
-        }
+        InputManager.Instance.OnClick -= SelectCard;
     }
+
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        Debug.Log("OnPointerEnter");
         isHovered = true;
     }
 

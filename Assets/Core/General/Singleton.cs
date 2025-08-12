@@ -5,7 +5,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     private static T _instance;
 
     // Свойство для доступа к экземпляру
-    public static T Q
+    public static T Instance
     {
         get
         {

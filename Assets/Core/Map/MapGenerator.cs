@@ -6,7 +6,7 @@ using UnityEngine;
 public class MapGenerator : MonoBehaviour
 {
     [Header("Основные настройки")]
-    public Config config;
+    public MapConfig config;
     public Transform startPoint;
 
     [Header("Префабы")]
@@ -19,23 +19,15 @@ public class MapGenerator : MonoBehaviour
     private Dictionary<int, List<GameObject>> pathCellsDictionary = new();
     public List<GameObject> allFirstCells = new();
 
-    [System.Serializable]
-    public class Config
-    {
-        public int pathsCount = 1;
-        public int pathLength = 10;
-        public float zOffsetRange = 0.5f;
-        public float distanceBetweenCells = 2f;
-        public float pathZSpacing = 3f;
-    }
 
-        private void Start()
-    {
-        if (!ValidateSettings()) return;
 
-        allPathsParent = new GameObject("All_Generated_Paths");
-        GenerateMap();
-    }
+    // private void Start()
+    // {
+    //     if (!ValidateSettings()) return;
+
+    //     allPathsParent = new GameObject("All_Generated_Paths");
+    //     GenerateMap();
+    // }
 
     [Button]
     public void GenerateMap()
@@ -50,6 +42,10 @@ public class MapGenerator : MonoBehaviour
         InitializeMapParent();
         GenerateAllPaths();
         CreateStartCell();
+
+        var spawnContent = GetComponent<SpawnContentInMap>();
+        spawnContent.GenerateContent();
+
     }
 
     private void ClearPreviousMap()
@@ -116,7 +112,7 @@ public class MapGenerator : MonoBehaviour
             basePos += new Vector3(config.distanceBetweenCells, 0f, 0f);
 
             // Генерируем случайное смещение по Z для текущей ячейки
-            float randomZ = RandomManager.Q.Range(-config.zOffsetRange, config.zOffsetRange);
+            float randomZ = RandomManager.Instance.Range(-config.zOffsetRange, config.zOffsetRange);
             currentPos = basePos + new Vector3(0f, 0f, randomZ);
 
             GameObject newCell = SpawnCell(currentPos, pathIndex, cellIndex, pathParent);
@@ -129,7 +125,16 @@ public class MapGenerator : MonoBehaviour
     private GameObject SpawnCell(Vector3 position, int pathIndex, int cellIndex, GameObject parent)
     {
         GameObject cell = Instantiate(cellPrefab, position, Quaternion.identity, parent.transform);
-        cell.name = $"Cell_{cellIndex}";
+        cell.GetComponent<CellData>().cellOrder = cellIndex + 1;
+        cell.name = $"{cellIndex + 1}";
+
+        if (config.monsterCells.Contains(cellIndex + 1))
+        {
+            cell.GetComponent<CellData>().cellVariant = CellData.CellVariant.Monster;
+        }
+        else
+            cell.GetComponent<CellData>().cellVariant = CellData.CellVariant.Shop;
+
         return cell;
     }
 
@@ -146,6 +151,24 @@ public class MapGenerator : MonoBehaviour
         line.positionCount = 2;
         line.SetPosition(0, from.transform.position);
         line.SetPosition(1, to.transform.position);
+
+        // Обновляем данные в CellData
+        CellData fromCellData = from.GetComponent<CellData>();
+        CellData toCellData = to.GetComponent<CellData>();
+
+        if (fromCellData != null && toCellData != null)
+        {
+            // Добавляем путь в список путей обеих клеток
+            fromCellData.paths.Add(connection);
+            toCellData.paths.Add(connection);
+
+            // Добавляем клетки в список соединенных клеток друг друга
+            if (!fromCellData.connectedCells.Contains(toCellData))
+                fromCellData.connectedCells.Add(toCellData);
+
+            if (!toCellData.connectedCells.Contains(fromCellData))
+                toCellData.connectedCells.Add(fromCellData);
+        }
     }
     public void CreateStartCell()
     {
@@ -158,11 +181,11 @@ public class MapGenerator : MonoBehaviour
         var centerZ = allFirstCells.Average(cell => cell.transform.position.z);
         var posForStartCell = new Vector3(allFirstCells[0].transform.position.x - 10, 0.5f, centerZ);
         var startCell = Instantiate(cellPrefab, posForStartCell, Quaternion.identity, allPathsParent.transform);
-
+        startCell.GetComponent<CellData>().cellVariant = CellData.CellVariant.Start;
+        
         foreach (var cell in allFirstCells)
         {
-            ConnectCells(cell, startCell, allPathsParent);
+            ConnectCells(startCell, cell, allPathsParent);
         }
-
     }
 }

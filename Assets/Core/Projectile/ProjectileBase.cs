@@ -1,66 +1,69 @@
 using UnityEngine;
 
+/// <summary>
+/// Базовый снаряд: поворот на цель → полёт → коллбек при прибытии.
+/// </summary>
 public class ProjectileBase : MonoBehaviour
 {
-    // общий алгоирмт - где-то спавним прожектаел. 
-    // делаем какой-то эффект появиления. поворчиваем ротацию, увелчиваем масштаб, етк
-    // отправялем к цели
     public GameObject target;
     public float speed;
+
     private bool _isFacingTarget;
+    private System.Action _onArrive;
+
+    /// <summary>
+    /// Инициализация цели и коллбека применения эффекта при попадании.
+    /// </summary>
+    public void Init(GameObject targetGo, System.Action onArrive)
+    {
+        target = targetGo;
+        _onArrive = onArrive;
+    }
 
     private void Update()
     {
         if (!_isFacingTarget)
         {
             RotateToTarget();
+            return;
         }
-        else
-        {
-            MoveToTarget();
-            CheckDistanceToTarget();
-        }
+
+        MoveToTarget();
+        TryArrive();
     }
 
     private void RotateToTarget()
     {
         if (target == null) return;
-
         Vector3 direction = (target.transform.position - transform.position).normalized;
-        if (direction != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, speed * Time.deltaTime);
+        if (direction == Vector3.zero) return;
 
-            // Проверяем, завершен ли поворот
-            if (Quaternion.Angle(transform.rotation, targetRotation) < 1f)
-            {
-                _isFacingTarget = true;
-            }
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, speed * Time.deltaTime);
+
+        if (Quaternion.Angle(transform.rotation, targetRotation) < 1f)
+        {
+            _isFacingTarget = true;
         }
     }
 
     private void MoveToTarget()
     {
         if (target == null) return;
-
         Vector3 direction = (target.transform.position - transform.position).normalized;
         transform.position += direction * speed * Time.deltaTime;
     }
 
-    private void CheckDistanceToTarget()
+    private void TryArrive()
     {
         if (target == null) return;
-
         float distance = Vector3.Distance(transform.position, target.transform.position);
-        if (distance <= 0.1f)
-        {
-            DestroyProjectile();
-        }
+        if (distance <= 0.1f) OnArrive();
     }
 
-    private void DestroyProjectile()
+    private void OnArrive()
     {
+        _onArrive?.Invoke();
         Destroy(gameObject);
     }
 }

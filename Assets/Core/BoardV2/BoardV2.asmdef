@@ -1,0 +1,17 @@
+{
+    "name": "ZXC",
+    "rootNamespace": "",
+    "references": [
+        "GUID:c95983e476f9b3c4a8d77ccdb0bb485d",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
