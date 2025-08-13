@@ -28,19 +28,13 @@ public class Target
         // Используем реестр существ для эффективности
         Candidates.Clear();
         var all = Creature.All;
-        if (att == GeneratedEnums.AttitudeId.Me)
-        {
-            if (self != null) Candidates.Add(self);
-            return Candidates;
-        }
         for (int i = 0; i < all.Count; i++)
         {
             var c = all[i];
             if (c == null || c == self) continue;
             bool isEnemy = c.teamNumber != self.teamNumber;
             if ((att == GeneratedEnums.AttitudeId.Enemy && isEnemy) ||
-                (att == GeneratedEnums.AttitudeId.Ally && !isEnemy) ||
-                (att == GeneratedEnums.AttitudeId.Random))
+                (att == GeneratedEnums.AttitudeId.Ally && !isEnemy))
             {
                 Candidates.Add(c);
             }
