@@ -7,6 +7,8 @@ public class Target
 {
     public GeneratedEnums.AttitudeId attitude = GeneratedEnums.AttitudeId.Enemy;
     public GeneratedEnums.ModifierId distance = GeneratedEnums.ModifierId.Least;
+    public GeneratedEnums.RaceId race;
+    public GeneratedEnums.DirectionId direction;
     public int maxTargets = 1;
 
     private static readonly List<Creature> Scratch = new();
@@ -26,13 +28,19 @@ public class Target
         // Используем реестр существ для эффективности
         Candidates.Clear();
         var all = Creature.All;
+        if (att == GeneratedEnums.AttitudeId.Me)
+        {
+            if (self != null) Candidates.Add(self);
+            return Candidates;
+        }
         for (int i = 0; i < all.Count; i++)
         {
             var c = all[i];
             if (c == null || c == self) continue;
             bool isEnemy = c.teamNumber != self.teamNumber;
             if ((att == GeneratedEnums.AttitudeId.Enemy && isEnemy) ||
-                (att == GeneratedEnums.AttitudeId.Ally && !isEnemy))
+                (att == GeneratedEnums.AttitudeId.Ally && !isEnemy) ||
+                (att == GeneratedEnums.AttitudeId.Random))
             {
                 Candidates.Add(c);
             }

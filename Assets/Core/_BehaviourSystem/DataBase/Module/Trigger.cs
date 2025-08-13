@@ -44,6 +44,7 @@ public class OnCooldown : Trigger
 }
 
 public class OnDied : Trigger { }
+public class OnPassive : Trigger { }
 
 public class OnAllyDied : Trigger { }
 
@@ -67,6 +68,6 @@ public class OnBattleBegin : Trigger
 }
 
 
-public class OnAppliedEffect: Trigger { }
+public class OnAppliedEffect : Trigger { }
 
 public class OnReceivedEffect : Trigger { }

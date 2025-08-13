@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 /// <summary>
 /// Базовое условие. Может проверять как самого себя (self), так и конкретную цель.
@@ -86,9 +87,9 @@ public class ConditionGroup : Condition
 /// Пример условия по расе цели (заглушка — доработайте сравнение с реальной расой).
 /// </summary>
 [Serializable]
-    public class RaceCondition : Condition
+public class RaceCondition : Condition
 {
-    public RaceSO Race;
+    public GeneratedEnums.RaceId race;
 
     public override bool EvaluateForTarget(Creature self, Creature target)
     {
@@ -105,3 +106,38 @@ public class NeighbourCondition : Condition
 {
     public GeneratedEnums.DirectionId direction;
 }
+
+[Serializable]
+public class EffectCondition : Condition
+{
+    public GeneratedEnums.EffectId effect;
+}
+
+[Serializable]
+public class StatisticCondition : Condition
+{
+    public GeneratedEnums.StatsId statistic;
+}
+
+[Serializable]
+public class OperationCondition : Condition
+{
+    public enum Operation
+    {
+        // обьект накладывает что-то
+        Add,
+        // обьект получает что-то
+        Get,
+        // обьект удаляет что-то
+        Remove
+    }
+
+    public Operation operation;
+}
+
+[Serializable]
+public class TargetCondition : Condition
+{
+    public Target Target;
+}
+

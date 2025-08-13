@@ -13,11 +13,12 @@ public class BehaviorRule
 
     [SerializeReference]
     public List<Condition> Conditions = new();
-
     public Target Target;
+
+
     [SerializeReference]
+    public GeneratedEnums.EffectId effect;
+    public GeneratedEnums.StatsId statistic;
+    public Value value;
 
-
-    public EffectSO effect;
-    public Statistic statistic;
 }
