@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using GeneratedEnums;
 
 /// <summary>
 /// Оркестратор исполнения правил поведения: триггеры → условия → цели → доставка → эффект.
@@ -12,6 +13,140 @@ public class BehaviorRunner : MonoBehaviour
     private Creature _self;
     private List<BehaviorRule> _rules;
     private ICreatureBehaviorProvider _provider;
+
+    // ------------------------
+    // Вложенные подсистемы для читаемости
+    // ------------------------
+    private static class TriggerLogic
+    {
+        public static void InitializeAll(List<BehaviorRule> rules, Creature self)
+        {
+            if (rules == null) return;
+            for (int i = 0; i < rules.Count; i++)
+            {
+                var rule = rules[i];
+                if (rule == null || rule.Triggers == null) continue;
+                for (int t = 0; t < rule.Triggers.Count; t++)
+                {
+                    rule.Triggers[t]?.Initialize(self);
+                }
+            }
+        }
+
+        public static bool ShouldFire(BehaviorRule rule, float deltaTime, Creature self)
+        {
+            var triggers = rule.Triggers;
+            if (triggers == null || triggers.Count == 0) return false;
+            for (int t = 0; t < triggers.Count; t++)
+            {
+                var trig = triggers[t];
+                if (trig != null && trig.TryFire(deltaTime, self)) return true;
+            }
+            return false;
+        }
+    }
+
+    private static class ConditionLogic
+    {
+        public static bool AreSelfConditionsMet(BehaviorRule rule, Creature self)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null || conditions.Count == 0) return true;
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                var cond = conditions[i];
+                if (cond != null && !cond.Evaluate(self)) return false;
+            }
+            return true;
+        }
+
+        public static bool AreTargetConditionsMet(List<Condition> conditions, Creature self, Creature candidate)
+        {
+            if (conditions == null || conditions.Count == 0) return true;
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                var cond = conditions[i];
+                if (cond != null && !cond.EvaluateForTarget(self, candidate)) return false;
+            }
+            return true;
+        }
+    }
+
+    private static class TargetLogic
+    {
+        private static readonly List<Creature> Buffer = new();
+
+        public static List<Creature> CollectAndFilterTargets(BehaviorRule rule, Creature self)
+        {
+            Buffer.Clear();
+            var selected = rule.Target != null ? rule.Target.Select(self) : null;
+            if (selected == null) return Buffer;
+
+            var conditions = rule.Conditions;
+            foreach (var candidate in selected)
+            {
+                if (candidate == null) continue;
+                if (!ConditionLogic.AreTargetConditionsMet(conditions, self, candidate)) continue;
+                Buffer.Add(candidate);
+            }
+            return Buffer;
+        }
+    }
+
+    private static class EffectLogic
+    {
+        public static void Deliver(Creature self, Creature target, BehaviorRule rule, GameObject projectilePrefab)
+        {
+            if (self == null || target == null || rule == null) return;
+
+            if (projectilePrefab == null)
+            {
+                ApplyInstant(self, target, rule);
+                return;
+            }
+
+            var go = UnityEngine.Object.Instantiate(projectilePrefab, self.transform.position, Quaternion.identity);
+            var proj = go.GetComponent<ProjectileBase>();
+            if (proj == null)
+            {
+                ApplyInstant(self, target, rule);
+                UnityEngine.Object.Destroy(go);
+                return;
+            }
+
+            proj.Init(target.gameObject, () => { ApplyInstant(self, target, rule); });
+        }
+
+        private static void ApplyInstant(Creature self, Creature target, BehaviorRule rule)
+        {
+            var so = CreateRuntimeEffectAsset(rule.effect, rule.value);
+            if (so == null) return;
+            EffectExecutor.Apply(self, target, so);
+        }
+
+        private static EffectSO CreateRuntimeEffectAsset(EffectId effectId, Value value)
+        {
+            if (effectId == EffectId.None) return null;
+            var so = ScriptableObject.CreateInstance<EffectSO>();
+            so.name = effectId.ToString();
+            so.amount = EvaluateAmount(value);
+            return so;
+        }
+
+        private static int EvaluateAmount(Value v)
+        {
+            if (v == null) return 0;
+            if (v.number != null) return v.number.value;
+            if (v.random != null)
+            {
+                var min = Math.Min(v.random.random.x, v.random.random.y);
+                var max = Math.Max(v.random.random.x, v.random.random.y) + 1;
+                return UnityEngine.Random.Range(min, max);
+            }
+            if (v.percent != null) return v.percent.percent; // упрощённая модель
+            return 0;
+        }
+    }
 
     [Serializable]
     public class Neighbor
@@ -114,15 +249,7 @@ public class BehaviorRunner : MonoBehaviour
 
     private void InitializeTriggersForAllRules()
     {
-        if (_rules == null) return;
-        foreach (var rule in _rules)
-        {
-            if (rule == null || rule.Triggers == null) continue;
-            foreach (var trig in rule.Triggers)
-            {
-                trig?.Initialize(_self);
-            }
-        }
+        TriggerLogic.InitializeAll(_rules, _self);
     }
 
     private bool IsReady()
@@ -142,66 +269,23 @@ public class BehaviorRunner : MonoBehaviour
 
     private void ProcessSingleRule(BehaviorRule rule, float deltaTime)
     {
-        if (!ShouldFireRule(rule, deltaTime)) return;
-        if (!AreSelfConditionsMet(rule)) return;
+        if (!ПроверкаТригера(rule, deltaTime)) return;
+        if (!ConditionLogic.AreSelfConditionsMet(rule, _self)) return;
 
-        var targets = CollectAndFilterTargets(rule);
+        var targets = TargetLogic.CollectAndFilterTargets(rule, _self);
         if (targets == null || targets.Count == 0) return;
 
         DeliverEffectToTargets(rule, targets);
     }
 
-    private bool ShouldFireRule(BehaviorRule rule, float deltaTime)
+    private bool ПроверкаТригера(BehaviorRule rule, float deltaTime)
     {
-        var triggers = rule.Triggers;
-        if (triggers == null || triggers.Count == 0) return false;
-
-        for (int t = 0; t < triggers.Count; t++)
-        {
-            var trig = triggers[t];
-            if (trig != null && trig.TryFire(deltaTime, _self)) return true;
-        }
-        return false;
-    }
-
-    private bool AreSelfConditionsMet(BehaviorRule rule)
-    {
-        var conditions = rule.Conditions;
-        if (conditions == null || conditions.Count == 0) return true;
-
-        for (int c = 0; c < conditions.Count; c++)
-        {
-            var cond = conditions[c];
-            if (cond != null && !cond.Evaluate(_self)) return false;
-        }
-        return true;
+        return TriggerLogic.ShouldFire(rule, deltaTime, _self);
     }
 
     private List<Creature> CollectAndFilterTargets(BehaviorRule rule)
     {
-        TargetsBuffer.Clear();
-        var selected = rule.Target != null ? rule.Target.Select(_self) : null;
-        if (selected == null) return TargetsBuffer;
-
-        var conditions = rule.Conditions;
-        foreach (var candidate in selected)
-        {
-            if (candidate == null) continue;
-            if (!AreTargetConditionsMet(conditions, candidate)) continue;
-            TargetsBuffer.Add(candidate);
-        }
-        return TargetsBuffer;
-    }
-
-    private bool AreTargetConditionsMet(List<Condition> conditions, Creature candidate)
-    {
-        if (conditions == null || conditions.Count == 0) return true;
-        for (int c = 0; c < conditions.Count; c++)
-        {
-            var cond = conditions[c];
-            if (cond != null && !cond.EvaluateForTarget(_self, candidate)) return false;
-        }
-        return true;
+        return TargetLogic.CollectAndFilterTargets(rule, _self);
     }
 
     private void DeliverEffectToTargets(BehaviorRule rule, List<Creature> targets)
@@ -215,48 +299,11 @@ public class BehaviorRunner : MonoBehaviour
 
     private void DeliverEffect(Creature self, Creature target, BehaviorRule rule)
     {
-        if (rule == null || rule.effect == null || target == null) return;
-
+        if (rule == null || target == null) return;
         var prefab = self.BehaviorProfile != null ? self.BehaviorProfile.spellPrefab : null;
-        if (prefab == null)
-        {
-            ApplyEffectInstant(self, target, rule);
-            return;
-        }
-
-        DeliverEffectByProjectile(self, target, rule, prefab);
+        EffectLogic.Deliver(self, target, rule, prefab);
     }
 
-    private static void ApplyEffectInstant(Creature self, Creature target, BehaviorRule rule)
-    {
-        TryApplyEffectViaExecutor(self, target, rule.effect);
-    }
-
-    private void DeliverEffectByProjectile(Creature self, Creature target, BehaviorRule rule, GameObject projectilePrefab)
-    {
-        var go = Instantiate(projectilePrefab, self.transform.position, Quaternion.identity);
-        var proj = go.GetComponent<ProjectileBase>();
-        if (proj == null)
-        {
-            TryApplyEffectViaExecutor(self, target, rule.effect);
-            Destroy(go);
-            return;
-        }
-
-        proj.Init(target.gameObject, () =>
-        {
-            TryApplyEffectViaExecutor(self, target, rule.effect);
-        });
-    }
-
-    private static void TryApplyEffectViaExecutor(Creature self, Creature target, EffectSO effect)
-    {
-        var t = Type.GetType("EffectExecutor");
-        if (t == null) return;
-        var m = t.GetMethod("Apply", BindingFlags.Public | BindingFlags.Static);
-        if (m == null) return;
-        m.Invoke(null, new object[] { self, target, effect });
-    }
 
     private void UpdateNeighborsIfNeeded()
     {
