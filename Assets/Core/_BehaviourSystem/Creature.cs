@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 /// </summary>
 public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 {
-    public static readonly System.Collections.Generic.List<Creature> All = new System.Collections.Generic.List<Creature>();
+    public static readonly List<Creature> All = new ();
     public CreatureBehaviorProfileSO behaviorProfile;
     ScriptableObject ICreatureComponent.CreatureData { get => behaviorProfile; set => behaviorProfile = value as CreatureBehaviorProfileSO; }
     public Image image;
@@ -40,6 +40,9 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     private void OnEnable()
     {
         if (!All.Contains(this)) All.Add(this);
+        // Автоматическая инициализация из профиля: визуал, статы, размер
+        InitVisualFromProfile();
+        InitStatsFromProfile();
         ApplyBoardSizeFromSO();
     }
 
@@ -54,6 +57,15 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         InitStatsFromProfile();
         ApplyBoardSizeFromSO();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // Обновляем визуал и размер в редакторе при изменении профиля
+        InitVisualFromProfile();
+        ApplyBoardSizeFromSO();
+    }
+#endif
 
     public class Behaviour { }
 
@@ -90,13 +102,29 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 
     private void InitVisualFromProfile()
     {
-        if (image == null) return;
-        if (behaviorProfile != null && behaviorProfile.image != null)
+        // Пытаемся найти UI Image автоматически, если не назначен в инспекторе
+        if (image == null)
         {
-            image.sprite = behaviorProfile.image;
-            return;
+            image = GetComponentInChildren<Image>(true);
         }
-        // Профиль обязателен — фолбэков нет
+
+        var sprite = behaviorProfile != null ? behaviorProfile.image : null;
+        if (sprite == null) return;
+
+        // Применяем к UI-изображению, если оно есть
+        if (image != null)
+        {
+            image.sprite = sprite;
+        }
+
+        // Применяем к SpriteRenderer (для 2D/мировых объектов)
+        var sr = GetComponentInChildren<SpriteRenderer>(true);
+        if (sr != null)
+        {
+            sr.sprite = sprite;
+        }
+
+        // Если нет ни UI Image, ни SpriteRenderer — оставляем как есть
     }
 
     private void InitStatsFromProfile()
