@@ -70,28 +70,106 @@ public class BehaviorRunner : MonoBehaviour
     private static class ConditionLogic
     {
         /// <summary>
-        /// Возвращает ссылку на найденное условие-перехватчик (ChangeBehaviorCondition), если оно есть и
-        /// при этом все прочие условия (кроме него) выполнены.
-        /// Если перехватчика нет — возвращает null, а AreSelfConditionsMet продолжит обычную проверку.
+        /// Возвращает индекс и ссылку на ChangeBehaviorCondition, если он присутствует и активен.
+        /// Если перехватчика нет или он выключен, возвращает -1 и null.
         /// </summary>
-        public static ChangeBehaviorCondition TryGetChangeBehaviorCondition(BehaviorRule rule, Creature self)
+        public static int GetChangeBehaviorIndex(BehaviorRule rule, out ChangeBehaviorCondition cbc)
         {
+            cbc = null;
             var conditions = rule.Conditions;
-            if (conditions == null || conditions.Count == 0) return null;
-
-            ChangeBehaviorCondition interceptor = null;
+            if (conditions == null) return -1;
             for (int i = 0; i < conditions.Count; i++)
             {
                 var cond = conditions[i];
-                if (cond == null) continue;
-                if (cond is ChangeBehaviorCondition cbc)
+                if (cond is ChangeBehaviorCondition found && cond.isActive)
                 {
-                    interceptor = cbc;
-                    continue; // не проверяем его здесь; он сработает, если остальные true
+                    cbc = found;
+                    return i;
                 }
-                if (!cond.Evaluate(self)) return null;
             }
-            return interceptor; // если добрались сюда — все прочие true
+            return -1;
+        }
+
+        /// <summary>
+        /// Есть ли хотя бы одно активное НЕ-перехватное условие выше указанного индекса.
+        /// Наличие хотя бы одного префикс-условия — обязательное требование для срабатывания перехватчика.
+        /// </summary>
+        public static bool HasActivePrefixConditions(BehaviorRule rule, int endExclusive)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null) return false;
+            int limit = Mathf.Clamp(endExclusive, 0, conditions.Count);
+            for (int i = 0; i < limit; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Проверяет, удовлетворяет ли кандидат всем активным НЕ-перехватным условиям выше индекса перехватчика.
+        /// Для универсальности оцениваем и Evaluate(self), и EvaluateForTarget(self, candidate).
+        /// </summary>
+        public static bool ArePrefixConditionsMetForCandidate(BehaviorRule rule, Creature self, Creature candidate, int endExclusive)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null) return true;
+            int limit = Mathf.Clamp(endExclusive, 0, conditions.Count);
+            for (int i = 0; i < limit; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                if (!cond.Evaluate(self)) return false;
+                if (!cond.EvaluateForTarget(self, candidate)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Проверяет только self-часть активных префикс-условий выше индекса перехватчика.
+        /// Должны выполниться все self-условия.
+        /// </summary>
+        public static bool ArePrefixSelfConditionsMet(BehaviorRule rule, Creature self, int endExclusive)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null) return false;
+            int limit = Mathf.Clamp(endExclusive, 0, conditions.Count);
+            bool hadAny = false;
+            for (int i = 0; i < limit; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                hadAny = true;
+                if (!cond.Evaluate(self)) return false;
+            }
+            return hadAny; // должны существовать и пройти хотя бы одно активное префикс-условие
+        }
+
+        /// <summary>
+        /// Проверяет target-часть активных префикс-условий выше индекса перехватчика.
+        /// </summary>
+        public static bool ArePrefixTargetConditionsMet(BehaviorRule rule, Creature self, Creature candidate, int endExclusive)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null) return true;
+            int limit = Mathf.Clamp(endExclusive, 0, conditions.Count);
+            for (int i = 0; i < limit; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                if (!cond.EvaluateForTarget(self, candidate)) return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -104,7 +182,10 @@ public class BehaviorRunner : MonoBehaviour
             for (int i = 0; i < conditions.Count; i++)
             {
                 var cond = conditions[i];
-                if (cond != null && !cond.Evaluate(self)) return false;
+                if (cond == null) continue;
+                if (!cond.isActive) continue; // выключенные условия игнорируем для ускорения тестов
+                if (cond is ChangeBehaviorCondition) continue; // перехватчик не участвует в базовой ветке
+                if (!cond.Evaluate(self)) return false;
             }
             return true;
         }
@@ -118,7 +199,49 @@ public class BehaviorRunner : MonoBehaviour
             for (int i = 0; i < conditions.Count; i++)
             {
                 var cond = conditions[i];
-                if (cond != null && !cond.EvaluateForTarget(self, candidate)) return false;
+                if (cond == null) continue;
+                if (!cond.isActive) continue; // выключенные условия игнорируем
+                if (cond is ChangeBehaviorCondition) continue; // перехватчик не фильтрует цели
+                if (!cond.EvaluateForTarget(self, candidate)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Проверяет target-условия, игнорируя префикс до указанного индекса и сам перехватчик.
+        /// Для базовой ветки, когда префиксные условия не прошли.
+        /// </summary>
+        public static bool AreTargetConditionsMetPostfix(List<Condition> conditions, Creature self, Creature candidate, int ignoreUntilIndex)
+        {
+            if (conditions == null || conditions.Count == 0) return true;
+            int start = Mathf.Clamp(ignoreUntilIndex + 1, 0, conditions.Count);
+            for (int i = start; i < conditions.Count; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                if (!cond.EvaluateForTarget(self, candidate)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Проверяет self-условия, игнорируя префикс до указанного индекса и сам перехватчик.
+        /// Применяется для базовой ветки, когда префиксные условия не прошли.
+        /// </summary>
+        public static bool AreSelfConditionsMetPostfix(BehaviorRule rule, Creature self, int ignoreUntilIndex)
+        {
+            var conditions = rule.Conditions;
+            if (conditions == null || conditions.Count == 0) return true;
+            int start = Mathf.Clamp(ignoreUntilIndex + 1, 0, conditions.Count);
+            for (int i = start; i < conditions.Count; i++)
+            {
+                var cond = conditions[i];
+                if (cond == null) continue;
+                if (!cond.isActive) continue;
+                if (cond is ChangeBehaviorCondition) continue;
+                if (!cond.Evaluate(self)) return false;
             }
             return true;
         }
@@ -132,7 +255,7 @@ public class BehaviorRunner : MonoBehaviour
         private static readonly List<Creature> Buffer = new();
 
         /// <summary>
-        /// Выбирает цели из правила и фильтрует по условиям на цель.
+        /// Выбирает цели из правила и фильтрует по условиям на цель (полный список условий).
         /// </summary>
         public static List<Creature> CollectAndFilterTargets(BehaviorRule rule, Creature self)
         {
@@ -145,6 +268,26 @@ public class BehaviorRunner : MonoBehaviour
             {
                 if (candidate == null) continue;
                 if (!ConditionLogic.AreTargetConditionsMet(conditions, self, candidate)) continue;
+                Buffer.Add(candidate);
+            }
+            return Buffer;
+        }
+
+        /// <summary>
+        /// Выбирает цели и фильтрует по условиям, игнорируя префикс до индекса перехватчика.
+        /// Применяется для базовой ветки, когда префиксные условия не прошли.
+        /// </summary>
+        public static List<Creature> CollectAndFilterTargetsPostfix(BehaviorRule rule, Creature self, int cbcIndex)
+        {
+            Buffer.Clear();
+            var selected = rule.Target != null ? rule.Target.Select(self) : null;
+            if (selected == null) return Buffer;
+
+            var conditions = rule.Conditions;
+            foreach (var candidate in selected)
+            {
+                if (candidate == null) continue;
+                if (!ConditionLogic.AreTargetConditionsMetPostfix(conditions, self, candidate, cbcIndex)) continue;
                 Buffer.Add(candidate);
             }
             return Buffer;
@@ -184,18 +327,27 @@ public class BehaviorRunner : MonoBehaviour
         /// <summary>
         /// Мгновенное применение эффекта (без визуальной доставки).
         /// </summary>
-        private static void ApplyInstant(Creature self, Creature target, BehaviorRule rule)
+            private static void ApplyInstant(Creature self, Creature target, BehaviorRule rule)
         {
-            var so = CreateRuntimeEffectAsset(rule.effect, rule.value);
-            if (so == null) return;
-            EffectExecutor.Apply(self, target, so);
+                // 1) Apply effect if any
+                var so = CreateRuntimeEffectAsset(rule.effect, rule.value);
+                if (so != null)
+                {
+                    EffectExecutor.Apply(self, target, so);
+                }
+                // 2) Apply statistic if any
+                if (rule.statistic != StatsId.None)
+                {
+                    int amount = EvaluateAmount(rule.value);
+                    EffectExecutor.ApplyStatistic(self, target, rule.statistic, amount);
+                }
         }
 
         /// <summary>
         /// Создаёт временный EffectSO по идентификатору енама и значению.
         /// Имя ассета совпадает с названием енама, чтобы корректно отработал EffectExecutor.
         /// </summary>
-        private static EffectSO CreateRuntimeEffectAsset(EffectId effectId, Value value)
+            private static EffectSO CreateRuntimeEffectAsset(EffectId effectId, Value value)
         {
             if (effectId == EffectId.None) return null;
             var so = ScriptableObject.CreateInstance<EffectSO>();
@@ -207,7 +359,7 @@ public class BehaviorRunner : MonoBehaviour
         /// <summary>
         /// Оценивает числовую величину эффекта из структуры Value (number/random/percent).
         /// </summary>
-        private static int EvaluateAmount(Value v)
+            private static int EvaluateAmount(Value v)
         {
             if (v == null) return 0;
             if (v.number != null) return v.number.value;
@@ -559,6 +711,8 @@ public class BehaviorRunner : MonoBehaviour
             int idx = Mathf.Clamp(rangIndex, 0, _self.BehaviorProfile.rangs.Count - 1);
             _runtimeProfile = ScriptableObject.Instantiate(_self.BehaviorProfile);
             _runtimeProfile.name = _self.BehaviorProfile.name; // убрать (Clone) в имени
+            // Обновляем ссылку в Creature на клон, чтобы инспектор и прочие пользователи видели рантайм-профиль
+            _self.behaviorProfile = _runtimeProfile;
             _rules = _runtimeProfile.rangs[idx].rules;
             return;
         }
@@ -601,35 +755,68 @@ public class BehaviorRunner : MonoBehaviour
     private void ProcessSingleRule(BehaviorRule rule, float deltaTime)
     {
         if (!CheckTrigger(rule, deltaTime)) return;
-        // 1) Проверяем, есть ли условие-перехватчик и выполнены ли все остальные условия
-        var changeBehavior = ConditionLogic.TryGetChangeBehaviorCondition(rule, _self);
-        if (changeBehavior == null)
-        {
-            if (!ConditionLogic.AreSelfConditionsMet(rule, _self)) return;
-        }
-
-        // 2) Выбираем цель: либо стандартную из правила, либо переопределённую
-        var effectiveRule = rule;
+        // 1) Перехватчик как «ИЛИ» с префиксными условиями, привязанными к целям перехватчика
+        int cbcIndex = ConditionLogic.GetChangeBehaviorIndex(rule, out var changeBehavior);
         if (changeBehavior != null)
         {
-            // Если перехватчик есть, подставляем его целевые поля поверх rule
-            effectiveRule = new BehaviorRule
+            // Требуем наличие хотя бы одного активного условия выше перехватчика И прохождение всех self-префиксов
+            bool hasPrefix = ConditionLogic.HasActivePrefixConditions(rule, cbcIndex);
+            if (hasPrefix && ConditionLogic.ArePrefixSelfConditionsMet(rule, _self, cbcIndex))
             {
-                Triggers = rule.Triggers, // триггеры не меняем
-                Conditions = rule.Conditions, // условия оставляем для EvaluateForTarget
-                Target = changeBehavior.Target != null ? changeBehavior.Target : rule.Target,
-                effect = changeBehavior.effect != EffectId.None ? changeBehavior.effect : rule.effect,
-                statistic = rule.statistic,
-                value = changeBehavior.value != null ? changeBehavior.value : rule.value
-            };
+                // Выбираем цели для перехватчика
+                var overrideTargetSelector = changeBehavior.Target != null ? changeBehavior.Target : rule.Target;
+                var overrideCandidates = overrideTargetSelector != null ? overrideTargetSelector.Select(_self) : null;
+                if (overrideCandidates != null)
+                {
+                    TargetsBuffer.Clear();
+                    foreach (var candidate in overrideCandidates)
+                    {
+                        if (candidate == null) continue;
+                        if (!ConditionLogic.ArePrefixTargetConditionsMet(rule, _self, candidate, cbcIndex)) continue;
+                        TargetsBuffer.Add(candidate);
+                    }
+                    if (TargetsBuffer.Count > 0)
+                    {
+                        // Сформируем эффективное правило и доставим эффект только по выбранным целям
+                        var effectiveRule = new BehaviorRule
+                        {
+                            Triggers = rule.Triggers,
+                            Conditions = rule.Conditions,
+                            Target = changeBehavior.Target != null ? changeBehavior.Target : rule.Target,
+                            effect = changeBehavior.effect != EffectId.None ? changeBehavior.effect : rule.effect,
+                            statistic = changeBehavior.statistic != StatsId.None ? changeBehavior.statistic : rule.statistic,
+                            value = changeBehavior.value != null ? changeBehavior.value : rule.value
+                        };
+
+                        _self.currentTarget = TargetsBuffer[0];
+                        DeliverEffectToTargets(effectiveRule, TargetsBuffer);
+                        return; // перехватчик сработал — выходим
+                    }
+                }
+            }
+            // если префикс отсутствует или цели не подошли — исполняем базовую ветку ниже
         }
-
-        var targets = TargetLogic.CollectAndFilterTargets(effectiveRule, _self);
-        // Обновляем debug-поле текущей цели сразу после выбора целей
-        _self.currentTarget = (targets != null && targets.Count > 0) ? targets[0] : null;
-        if (targets == null || targets.Count == 0) return;
-
-        DeliverEffectToTargets(effectiveRule, targets);
+        // 2) Базовая ветка
+        if (changeBehavior == null)
+        {
+            // Перехватчика нет — проверяем все условия целиком
+            if (!ConditionLogic.AreSelfConditionsMet(rule, _self)) return;
+            var targets = TargetLogic.CollectAndFilterTargets(rule, _self);
+            _self.currentTarget = (targets != null && targets.Count > 0) ? targets[0] : null;
+            if (targets == null || targets.Count == 0) return;
+            DeliverEffectToTargets(rule, targets);
+            return;
+        }
+        else
+        {
+            // Перехватчик есть, но не сработал — игнорируем префиксные условия и проверяем только постфикс
+            if (!ConditionLogic.AreSelfConditionsMetPostfix(rule, _self, cbcIndex)) return;
+            var targets = TargetLogic.CollectAndFilterTargetsPostfix(rule, _self, cbcIndex);
+            _self.currentTarget = (targets != null && targets.Count > 0) ? targets[0] : null;
+            if (targets == null || targets.Count == 0) return;
+            DeliverEffectToTargets(rule, targets);
+            return;
+        }
     }
 
     /// <summary>

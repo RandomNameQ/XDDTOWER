@@ -8,13 +8,14 @@ public class CreatureBehaviorProfileSO : RegistryItemSO
     // Полный отказ от CreatureSO: профиль самодостаточен
     public Sprite image;
     public Vector2Int size;
-    public GeneratedEnums.RaceId race;
+    public List<GeneratedEnums.RaceId> races = new();
     public GameObject spellPrefab;
+    public new string name;
+
 
     [Serializable]
     public class RangRules
     {
-        public string name;
         [SerializeReference]
         public List<BehaviorRule> rules = new();
         public int maxHealth = 100;

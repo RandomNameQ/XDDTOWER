@@ -10,29 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28e7f756a55ac18459b0277a474e44dc, type: 3}
-  m_Name: 1x1
+  m_Name: "\u0421\u0442\u0430\u0439\u043D\u044B\u0439 \u0433\u043E\u0431\u043B\u0438\u043D"
   m_EditorClassIdentifier: 
-  id: bcaf9b5900af250b0e465a7de72aa557
+  id: 6d2767b0f69a889719bcec0a3c344a52
   image: {fileID: 21300000, guid: c5c9d4718a074ca4e8d7c6c6fb25c1c7, type: 3}
   size: {x: 1, y: 1}
-  race: 0
+  races: 02000000
   spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
+  name: 
   rangs:
-  - name: 
-    rules:
-    - rid: 5418049450134208591
-    maxHealth: 100
+  - rules:
+    - rid: 5418049450134208597
+    - rid: 5418049450134208606
+    maxHealth: 30
   references:
     version: 2
     RefIds:
-    - rid: 5418049450134208591
+    - rid: 5418049450134208597
       type: {class: BehaviorRule, ns: , asm: LastOne}
       data:
         Triggers:
-        - rid: 5418049450134208592
-        Conditions:
-        - rid: 5418049450134208593
-        - rid: 5418049450134208596
+        - rid: 5418049450134208598
+        Conditions: []
         Target:
           attitude: 2
           distance: 4
@@ -43,7 +42,7 @@ MonoBehaviour:
         statistic: 0
         value:
           number:
-            value: 10
+            value: 7
           percent:
             percent: 0
             target:
@@ -59,36 +58,80 @@ MonoBehaviour:
               operation: 0
           random:
             random: {x: 0, y: 0}
-    - rid: 5418049450134208592
+    - rid: 5418049450134208598
       type: {class: OnCooldown, ns: , asm: LastOne}
       data:
-        cooldown: 2
-    - rid: 5418049450134208593
+        cooldown: 10
+    - rid: 5418049450134208606
+      type: {class: BehaviorRule, ns: , asm: LastOne}
+      data:
+        Triggers:
+        - rid: 5418049450134208607
+        Conditions:
+        - rid: 5418049450134208608
+        - rid: 5418049450134208609
+        - rid: 5418049450134208610
+        Target:
+          attitude: 2
+          distance: 4
+          race: 0
+          direction: 0
+          maxTargets: 1
+        effect: 0
+        statistic: 0
+        value:
+          number:
+            value: 0
+          percent:
+            percent: 5
+            target:
+              attitude: 4
+              distance: 4
+              race: 0
+              direction: 0
+              maxTargets: 1
+            effect:
+              effect: {fileID: 0}
+            statistic:
+              stat: {fileID: 0}
+              operation: 0
+          random:
+            random: {x: 0, y: 0}
+    - rid: 5418049450134208607
+      type: {class: OnPassive, ns: , asm: LastOne}
+      data: 
+    - rid: 5418049450134208608
       type: {class: NeighbourCondition, ns: , asm: LastOne}
       data:
         isActive: 1
         Op: 0
-        direction: 128
-    - rid: 5418049450134208596
+        direction: 1
+    - rid: 5418049450134208609
+      type: {class: RaceCondition, ns: , asm: LastOne}
+      data:
+        isActive: 1
+        Op: 0
+        race: 2
+    - rid: 5418049450134208610
       type: {class: ChangeBehaviorCondition, ns: , asm: LastOne}
       data:
         isActive: 1
         Op: 0
         Target:
-          attitude: 1
+          attitude: 4
           distance: 4
           race: 0
           direction: 0
           maxTargets: 1
-        effect: 2
-        statistic: 0
+        effect: 0
+        statistic: 17
         value:
           number:
-            value: 10
+            value: 0
           percent:
-            percent: 0
+            percent: 5
             target:
-              attitude: 2
+              attitude: 4
               distance: 4
               race: 0
               direction: 0

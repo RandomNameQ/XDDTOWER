@@ -47,6 +47,9 @@ public class OnDied : Trigger { }
 public class OnPassive : Trigger { }
 
 public class OnAllyDied : Trigger { }
+public class OnNeighbourBonuses : Trigger
+{
+}
 
 public class OnBattleBegin : Trigger
 {

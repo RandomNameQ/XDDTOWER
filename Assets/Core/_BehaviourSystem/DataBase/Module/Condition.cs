@@ -10,6 +10,7 @@ using GeneratedEnums;
 [Serializable]
 public abstract class Condition
 {
+    public bool isActive = true;
     /// <summary>
     /// Проверка без привязки к цели (например, текущие ХП юнита и т.п.).
     /// </summary>
@@ -95,9 +96,10 @@ public class RaceCondition : Condition
     public override bool EvaluateForTarget(Creature self, Creature target)
     {
         if (target == null) return false;
-        var raceId = target.BehaviorProfile != null ? target.BehaviorProfile.race : GeneratedEnums.RaceId.None;
-        if (raceId == GeneratedEnums.RaceId.None) return false;
-        return true;
+        if (race == GeneratedEnums.RaceId.None) return false;
+        var profile = target.BehaviorProfile;
+        if (profile == null || profile.races == null || profile.races.Count == 0) return false;
+        return profile.races.Contains(race);
     }
 }
 
@@ -151,7 +153,6 @@ public class StatisticCondition : Condition
 public class ChangeBehaviorCondition : Condition
 {
     public Target Target;
-    [SerializeReference]
     public EffectId effect;
     public StatsId statistic;
     public Value value;

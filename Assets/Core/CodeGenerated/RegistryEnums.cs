@@ -29,21 +29,24 @@ namespace GeneratedEnums
     public enum CreatureBehaviorProfileId : int
     {
         None = 0,
-        CreatureBehaviorProfile = 1 << 0,
+        _1x1 = 1 << 0,
+        _2x2 = 1 << 1,
+        Стайный_гоблин = 1 << 2,
     }
 
     [Flags]
     public enum DirectionId : int
     {
         None = 0,
-        Back = 1 << 0,
-        BackLeft = 1 << 1,
-        BackRight = 1 << 2,
-        Front = 1 << 3,
-        FrontLeft = 1 << 4,
-        FrontRight = 1 << 5,
-        Left = 1 << 6,
-        Right = 1 << 7,
+        ALL = 1 << 0,
+        Back = 1 << 1,
+        BackLeft = 1 << 2,
+        BackRight = 1 << 3,
+        Front = 1 << 4,
+        FrontLeft = 1 << 5,
+        FrontRight = 1 << 6,
+        Left = 1 << 7,
+        Right = 1 << 8,
     }
 
     [Flags]
@@ -69,16 +72,22 @@ namespace GeneratedEnums
     {
         None = 0,
         Elf = 1 << 0,
+        Goblin = 1 << 1,
+        Human = 1 << 2,
+        Orc = 1 << 3,
+        Undead = 1 << 4,
     }
 
     [Flags]
     public enum StatsId : int
     {
         None = 0,
-        CritChance = 1 << 0,
-        CritDmg = 1 << 1,
-        CurrentHealth = 1 << 2,
-        MaxHealth = 1 << 3,
+        Cooldown = 1 << 0,
+        CritChance = 1 << 1,
+        CritDmg = 1 << 2,
+        CurrentHealth = 1 << 3,
+        Damage = 1 << 4,
+        MaxHealth = 1 << 5,
     }
 
 }

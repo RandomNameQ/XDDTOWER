@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using GeneratedEnums;
 public static class EffectExecutor
 {
     private static readonly Dictionary<EffectId, Action<Creature, Creature, EffectSO>> Handlers = new();
+    private static readonly Dictionary<StatsId, Action<Creature, Creature, int>> StatHandlers = new();
     private static bool _initialized;
 
     public static void Register(EffectId id, Action<Creature, Creature, EffectSO> handler)
@@ -32,6 +35,35 @@ public static class EffectExecutor
         {
             handler(self, target, effect);
         }
+        UnityEngine.Debug.Log($"EffectExecutor.Apply: {effect.name}");
+    }
+
+    public static void RegisterStat(StatsId id, Action<Creature, Creature, int> handler)
+    {
+        if (handler == null) return;
+        StatHandlers[id] = handler;
+    }
+
+    public static void UnregisterStat(StatsId id)
+    {
+        if (StatHandlers.ContainsKey(id)) StatHandlers.Remove(id);
+    }
+
+    public static void ApplyStatistic(Creature self, Creature target, StatsId statId, int amount)
+    {
+        if (self == null || target == null) return;
+        EnsureBuiltins();
+
+        if (StatHandlers.TryGetValue(statId, out var handler))
+        {
+            handler(self, target, amount);
+            UnityEngine.Debug.Log($"EffectExecutor.ApplyStatistic: {statId} += {amount}");
+            return;
+        }
+
+        // Generic reflection-based fallback: try to find a numeric field or property matching statId
+        TryApplyStatViaReflection(target, statId.ToString(), amount);
+        UnityEngine.Debug.Log($"EffectExecutor.ApplyStatistic (fallback): {statId} += {amount}");
     }
 
     private static EffectId ResolveId(string effectName)
@@ -62,6 +94,70 @@ public static class EffectExecutor
             var amount = Math.Max(0, so.amount);
             target.currentHealth += amount;
         });
+
+        // Builtin example for stats: Health via reflection-friendly path
+        RegisterStat(default, (self, target, amount) => { }); // placeholder to ensure dictionary is non-empty
+    }
+
+    private static void TryApplyStatViaReflection(Creature target, string statName, int amount)
+    {
+        if (target == null || string.IsNullOrWhiteSpace(statName)) return;
+        var type = target.GetType();
+        var candidates = new List<string>
+        {
+            statName,
+            "current" + statName,
+            "Current" + statName,
+        };
+
+        // Try fields first
+        var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        foreach (var f in fields)
+        {
+            foreach (var n in candidates)
+            {
+                if (string.Equals(f.Name, n, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (f.FieldType == typeof(int))
+                    {
+                        int cur = (int)f.GetValue(target);
+                        f.SetValue(target, cur + amount);
+                        return;
+                    }
+                    if (f.FieldType == typeof(float))
+                    {
+                        float cur = (float)f.GetValue(target);
+                        f.SetValue(target, cur + amount);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Try properties next
+        var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        foreach (var p in props)
+        {
+            foreach (var n in candidates)
+            {
+                if (!p.CanRead || !p.CanWrite) continue;
+                if (string.Equals(p.Name, n, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (p.PropertyType == typeof(int))
+                    {
+                        int cur = (int)p.GetValue(target);
+                        p.SetValue(target, cur + amount);
+                        return;
+                    }
+                    if (p.PropertyType == typeof(float))
+                    {
+                        float cur = (float)p.GetValue(target);
+                        p.SetValue(target, cur + amount);
+                        return;
+                    }
+                }
+            }
+        }
     }
 }
 
