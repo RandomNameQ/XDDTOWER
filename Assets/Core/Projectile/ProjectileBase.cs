@@ -9,15 +9,13 @@ public class ProjectileBase : MonoBehaviour
     public float speed;
 
     private bool _isFacingTarget;
-    private System.Action _onArrive;
 
     /// <summary>
     /// Инициализация цели и коллбека применения эффекта при попадании.
     /// </summary>
-    public void Init(GameObject targetGo, System.Action onArrive)
+    public void Init(GameObject targetGo)
     {
         target = targetGo;
-        _onArrive = onArrive;
     }
 
     private void Update()
@@ -63,7 +61,6 @@ public class ProjectileBase : MonoBehaviour
 
     private void OnArrive()
     {
-        _onArrive?.Invoke();
         Destroy(gameObject);
     }
 }

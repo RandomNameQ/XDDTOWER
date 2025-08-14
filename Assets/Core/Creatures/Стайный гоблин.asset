@@ -25,7 +25,8 @@ MonoBehaviour:
       - groupLogic: 1
         op: 0
         race: 01000000
-        operation: 0
+        operation: 02000000
+        effectInteraction: 0
         effect: 02000000
         stats: 
         neighbours: 02000000

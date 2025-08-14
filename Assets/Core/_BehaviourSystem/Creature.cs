@@ -20,6 +20,9 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     public Image image;
     public Behavior behavior;
 
+    [HideInInspector]
+    public CreatureLife creatureLife;
+
     public enum TeamNumber
     {
         Zero,
@@ -39,6 +42,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     private void Awake()
     {
         EnsureBehaviorRunnerAttached();
+        creatureLife = GetComponent<CreatureLife>();
     }
 
     private void Start()
