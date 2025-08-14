@@ -1,21 +1,25 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine.UI;
- 
+using System;
+using System.Collections;
+using System.Reflection;
+using ScrutableObjects;
 using Sirenix.OdinInspector;
-using JetBrains.Annotations;
+using System.Linq;
 
 /// <summary>
 /// Носитель поведения на сцене. Хранит базовые данные юнита и реестр всех существ.
 /// </summary>
 public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 {
-    public static readonly List<Creature> All = new ();
+    public static readonly List<Creature> All = new();
+    [ShowProperties]
     public CreatureBehaviorProfileSO behaviorProfile;
     ScriptableObject ICreatureComponent.CreatureData { get => behaviorProfile; set => behaviorProfile = value as CreatureBehaviorProfileSO; }
     public Image image;
-    
+    public Behavior behavior;
+
     public enum TeamNumber
     {
         Zero,
@@ -37,6 +41,10 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         EnsureBehaviorRunnerAttached();
     }
 
+    private void Start()
+    {
+        behavior = new(this);
+    }
     private void OnEnable()
     {
         if (!All.Contains(this)) All.Add(this);
@@ -44,6 +52,9 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         InitVisualFromProfile();
         InitStatsFromProfile();
         ApplyBoardSizeFromSO();
+        BuildRuntimeRulesFromProfile();
+
+
     }
 
     private void OnDisable()
@@ -67,7 +78,6 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     }
 #endif
 
-    public class Behaviour { }
 
     private void EnsureBehaviorRunnerAttached()
     {
@@ -96,9 +106,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 
     public CreatureBehaviorProfileSO BehaviorProfile => behaviorProfile;
 
-    // Полный отказ от CreatureSO — сеттера под него больше нет
 
-    // Полный отказ от CreatureSO: вспомогательных методов не требуется
 
     private void InitVisualFromProfile()
     {
@@ -129,14 +137,103 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 
     private void InitStatsFromProfile()
     {
-        if (behaviorProfile == null || behaviorProfile.rangs == null || behaviorProfile.rangs.Count == 0) return;
-        var runner = GetComponent<BehaviorRunner>();
-        int idx = runner != null ? Mathf.Clamp(runner.rangIndex, 0, behaviorProfile.rangs.Count - 1) : 0;
-        int maxHp = behaviorProfile.rangs[idx].maxHealth;
+        if (behaviorProfile == null) return;
+        int maxHp = behaviorProfile.rangs
+            .Where(rang => rang != null && rang.isActiveRang)
+            .Select(rang => Mathf.RoundToInt(rang.deffence.maxHealh.baseValue))
+            .FirstOrDefault();
         if (maxHp > 0)
         {
             currentHealth = maxHp;
         }
     }
 
+    // Runtime-экземпляры правил для данного существа (клонируются из профиля)
+    public List<BehaviorRule> runtimeRules = new();
+
+    private void BuildRuntimeRulesFromProfile()
+    {
+        runtimeRules.Clear();
+        if (behaviorProfile == null || behaviorProfile.rangs == null || behaviorProfile.rangs.Count == 0) return;
+        var runner = GetComponent<BehaviorRunner>();
+        int idx = runner != null ? Mathf.Clamp(runner.rangIndex, 0, behaviorProfile.rangs.Count - 1) : 0;
+        var sourceRules = behaviorProfile.rangs[idx].rules;
+        if (sourceRules == null || sourceRules.Count == 0) return;
+        foreach (var src in sourceRules)
+        {
+            var cloned = DeepCloneBehaviorRule(src);
+            cloned.Initialize(this);
+            runtimeRules.Add(cloned);
+        }
+    }
+
+    private static BehaviorRule DeepCloneBehaviorRule(BehaviorRule source)
+    {
+        if (source == null) return null;
+        return (BehaviorRule)DeepCloneObject(source);
+    }
+
+    private static object DeepCloneObject(object source)
+    {
+        if (source == null) return null;
+        var t = source.GetType();
+        // Примитивы и строки копируем как есть
+        if (t.IsPrimitive || t.IsEnum || t == typeof(string) || t == typeof(decimal)) return source;
+        // UnityEngine.Object-ссылки оставляем как есть (не клонируем ассеты/компоненты)
+        if (typeof(UnityEngine.Object).IsAssignableFrom(t)) return source;
+        // Коллекции
+        if (typeof(IList).IsAssignableFrom(t))
+        {
+            var list = (IList)source;
+            var elementType = t.IsArray ? t.GetElementType() : t.IsGenericType ? t.GetGenericArguments()[0] : typeof(object);
+            var clonedList = t.IsArray ? (IList)Array.CreateInstance(elementType, list.Count) : (IList)Activator.CreateInstance(t);
+            int i = 0;
+            foreach (var item in list)
+            {
+                var clonedItem = DeepCloneObject(item);
+                if (t.IsArray)
+                {
+                    clonedList[i++] = clonedItem;
+                }
+                else
+                {
+                    clonedList.Add(clonedItem);
+                }
+            }
+            return clonedList;
+        }
+        // Остальные ссылочные типы: создаём экземпляр и копируем поля
+        var clone = Activator.CreateInstance(t);
+        var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        foreach (var f in t.GetFields(flags))
+        {
+            // Пропускаем автосвойства-компиляторные (обычно имя содержит '>k__BackingField')
+            if (f.Name.Contains("k__BackingField")) continue;
+            var fv = f.GetValue(source);
+            var cv = DeepCloneObject(fv);
+            f.SetValue(clone, cv);
+        }
+        return clone;
+    }
+
+    [Serializable]
+    public class Behavior
+    {
+        public Creature creature;
+
+        public Behavior(Creature creature)
+        {
+            this.creature = creature;
+        }
+
+        public void ApplyEffect(GeneratedEnums.EffectId effect)
+        {
+
+        }
+        public void ReciveEffect()
+        {
+
+        }
+
+    }
 }

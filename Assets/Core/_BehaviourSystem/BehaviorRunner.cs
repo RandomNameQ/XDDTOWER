@@ -2,44 +2,29 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using GeneratedEnums;
 
 /// <summary>
-/// Компонент отвечает только за позиционирование и сбор соседей (8 направлений) через грид-систему.
-/// Логика исполнения правил поведения удалена.
+/// Оркестратор исполнения правил поведения: триггеры → условия → цели → доставка → эффект.
+/// Разбит на небольшие подсистемы (вложенные классы), чтобы чтение логики было максимально простым.
 /// </summary>
 public class BehaviorRunner : MonoBehaviour
 {
+    /// <summary>
+    /// Ссылка на самого владельца-существо.
+    /// </summary>
     private Creature _self;
-    public Neighbor neighbors;
-    private NeighborsLogic _neighborsLogic;
-    [Tooltip("Какой ранг использовать из CreatureBehaviorProfileSO.rangs")] public int rangIndex = 0;
+    /// <summary>
+    /// Активный список правил поведения, выбранный по рангу.
+    /// </summary>
+    private List<BehaviorRule> _rules;
+    /// <summary>
+    /// Провайдер профилей поведения (на будущее, сейчас не используется для загрузки).
+    /// </summary>
+    private ICreatureBehaviorProvider _provider;
 
-    private void Start()
-    {
-        _self = GetComponent<Creature>();
-        _neighborsLogic = new NeighborsLogic(_self, this);
-        _neighborsLogic.Subscribe();
-    }
 
-    private void Update()
-    {
-        _neighborsLogic?.UpdateIfNeeded();
-    }
 
-    private void OnGridNeighborsChanged()
-    {
-        _neighborsLogic?.UpdateNeighbors();
-    }
-
-    public void UpdateNeighbors()
-    {
-        _neighborsLogic?.UpdateNeighbors();
-    }
-
-    private void OnDestroy()
-    {
-        _neighborsLogic?.Unsubscribe();
-    }
 
     /// <summary>
     /// Подсистема соседей/позиционирования: отслеживание изменения клетки/доски и сбор соседей в 8 направлениях.
@@ -270,4 +255,95 @@ public class BehaviorRunner : MonoBehaviour
         public List<Creature> backLeft = new();
         public List<Creature> backRight = new();
     }
+    /// <summary>
+    /// Публичный доступ к соседям для инспектора/других систем.
+    /// </summary>
+    public Neighbor neighbors;
+
+    /// <summary>
+    /// Менеджер соседей, инкапсулирующий всю позиционную логику.
+    /// </summary>
+    private NeighborsLogic _neighborsLogic;
+    /// <summary>
+    /// Рантайм-копия профиля поведения, чтобы экземпляры не делили состояние.
+    /// </summary>
+    private CreatureBehaviorProfileSO _runtimeProfile;
+
+    /// <summary>
+    /// Индекс ранга из профиля поведения, по которому берутся правила.
+    /// </summary>
+    [Tooltip("Какой ранг использовать из CreatureBehaviorProfileSO.rangs")] public int rangIndex = 0;
+
+    /// <summary>
+    /// Временный буфер целей (оставлен для обратной совместимости, текущая логика использует TargetLogic.Buffer).
+    /// </summary>
+    private static readonly List<Creature> TargetsBuffer = new();
+
+    /// <summary>
+    /// Точка входа: инициализация self/правил/провайдера, триггеров и подписка на обновление соседей.
+    /// </summary>
+    private void Start()
+    {
+        InitializeSelfAndRules();
+        InitializeProvider();
+        // Инициализируем менеджер соседей и подписываемся на события
+        _neighborsLogic = new NeighborsLogic(_self, this);
+        _neighborsLogic.Subscribe();
+    }
+
+    /// <summary>
+    /// Ежекадровый цикл: при необходимости обновляем соседей и запускаем обработку правил.
+    /// </summary>
+    private void Update()
+    {
+        _neighborsLogic?.UpdateIfNeeded();
+    }
+
+    /// <summary>
+    /// Внешний хук (если используется системой грида): перестроить соседей немедленно.
+    /// </summary>
+    private void OnGridNeighborsChanged()
+    {
+        _neighborsLogic?.UpdateNeighbors();
+    }
+
+    /// <summary>
+    /// Публичный метод для внешнего ручного запроса обновления соседей.
+    /// </summary>
+    public void UpdateNeighbors()
+    {
+        _neighborsLogic?.UpdateNeighbors();
+    }
+
+    /// <summary>
+    /// Отписка от событий при уничтожении.
+    /// </summary>
+    private void OnDestroy()
+    {
+        _neighborsLogic?.Unsubscribe();
+    }
+
+    /// <summary>
+    /// Инициализация ссылки на self и базовая проверка наличия профиля.
+    /// </summary>
+    private void InitializeSelfAndRules()
+    {
+        _self = GetComponent<Creature>();
+        if (_self == null || _self.BehaviorProfile == null) return;
+    }
+
+    /// <summary>
+    /// Инициализация провайдера профилей (при отсутствии локального компонента выполняется глобальный поиск).
+    /// </summary>
+    private void InitializeProvider()
+    {
+        _provider = GetComponent<ICreatureBehaviorProvider>();
+        if (_provider == null)
+        {
+            _provider = FindFirstObjectByType<CreatureBehaviorProvider>();
+        }
+    }
+
+
+
 }

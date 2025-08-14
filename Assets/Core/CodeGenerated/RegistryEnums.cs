@@ -29,9 +29,10 @@ namespace GeneratedEnums
     public enum CreatureBehaviorProfileId : int
     {
         None = 0,
-        _1x1 = 1 << 0,
-        _2x2 = 1 << 1,
-        Стайный_гоблин = 1 << 2,
+        _0_ = 1 << 0,
+        _1x1 = 1 << 1,
+        _2x2 = 1 << 2,
+        Стайный_гоблин = 1 << 3,
     }
 
     [Flags]
@@ -53,8 +54,12 @@ namespace GeneratedEnums
     public enum EffectId : int
     {
         None = 0,
-        Damage = 1 << 0,
-        Heal = 1 << 1,
+        Burn = 1 << 0,
+        Damage = 1 << 1,
+        Freeze = 1 << 2,
+        Haste = 1 << 3,
+        Heal = 1 << 4,
+        Slow = 1 << 5,
     }
 
     [Flags]
@@ -82,12 +87,15 @@ namespace GeneratedEnums
     public enum StatsId : int
     {
         None = 0,
-        Cooldown = 1 << 0,
-        CritChance = 1 << 1,
-        CritDmg = 1 << 2,
-        CurrentHealth = 1 << 3,
-        Damage = 1 << 4,
-        MaxHealth = 1 << 5,
+        BlockChance = 1 << 0,
+        Cooldown = 1 << 1,
+        CriticalChance = 1 << 2,
+        CriticalDamage = 1 << 3,
+        CurrentHealth = 1 << 4,
+        Damage = 1 << 5,
+        DodgeChance = 1 << 6,
+        MaxHealth = 1 << 7,
+        Regeneration = 1 << 8,
     }
 
 }

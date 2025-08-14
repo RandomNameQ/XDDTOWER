@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7b1489649f0e6a4686c674defefe8c0, type: 3}
-  m_Name: CritDmg
+  m_Script: {fileID: 11500000, guid: a41b9651b7eaaa3448b32762078e5eaa, type: 3}
+  m_Name: Freeze
   m_EditorClassIdentifier: 
-  id: ab4f3711841b8796845ec6c218189ee3
+  id: 

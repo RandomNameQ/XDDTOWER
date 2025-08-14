@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7b1489649f0e6a4686c674defefe8c0, type: 3}
-  m_Name: CritChance
+  m_Name: CriticalDamage
   m_EditorClassIdentifier: 
-  id: 0a553ed1f13f3a58c86a3ba00d78f67a
+  id: 01dc2c0b0a5b72f35bfbe2a358b82c27

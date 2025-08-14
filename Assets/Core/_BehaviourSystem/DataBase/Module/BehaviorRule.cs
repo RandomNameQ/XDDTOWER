@@ -7,12 +7,12 @@ using UnityEngine;
 public class BehaviorRule
 {
 
-    [ListDrawerSettings(ShowFoldout = true, DefaultExpandedState = false, DraggableItems = true, ShowIndexLabels = true)]
-    [SerializeReference]
+    [HideInInspector]
+    public Creature client;
+
+    [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]
     public List<Trigger> Triggers = new();
 
-    [SerializeReference]
-    public List<Condition> Conditions = new();
     public Target Target;
 
 
@@ -20,5 +20,20 @@ public class BehaviorRule
     public GeneratedEnums.EffectId effect;
     public GeneratedEnums.StatsId statistic;
     public Value value;
+
+    public List<Action> eventsChain = new();
+
+
+    public void Initialize(Creature ownerCreature)
+    {
+        client = ownerCreature;
+        if (Triggers != null)
+        {
+            foreach (var t in Triggers)
+            {
+                t?.Initialize(this);
+            }
+        }
+    }
 
 }

@@ -20,126 +20,73 @@ MonoBehaviour:
   name: 
   rangs:
   - rules:
-    - rid: 5418049450134208597
-    - rid: 5418049450134208606
-    maxHealth: 30
-  references:
-    version: 2
-    RefIds:
-    - rid: 5418049450134208597
-      type: {class: BehaviorRule, ns: , asm: LastOne}
-      data:
-        Triggers:
-        - rid: 5418049450134208598
-        Conditions: []
-        Target:
-          attitude: 2
-          distance: 4
-          race: 0
-          direction: 0
-          maxTargets: 1
-        effect: 1
-        statistic: 0
-        value:
-          number:
-            value: 7
-          percent:
-            percent: 0
-            target:
-              attitude: 2
-              distance: 4
-              race: 0
-              direction: 0
-              maxTargets: 1
-            effect:
-              effect: {fileID: 0}
-            statistic:
-              stat: {fileID: 0}
-              operation: 0
-          random:
-            random: {x: 0, y: 0}
-    - rid: 5418049450134208598
-      type: {class: OnCooldown, ns: , asm: LastOne}
-      data:
-        cooldown: 10
-    - rid: 5418049450134208606
-      type: {class: BehaviorRule, ns: , asm: LastOne}
-      data:
-        Triggers:
-        - rid: 5418049450134208607
-        Conditions:
-        - rid: 5418049450134208608
-        - rid: 5418049450134208609
-        - rid: 5418049450134208610
-        Target:
-          attitude: 2
-          distance: 4
-          race: 0
-          direction: 0
-          maxTargets: 1
-        effect: 0
-        statistic: 0
-        value:
-          number:
-            value: 0
-          percent:
-            percent: 5
-            target:
-              attitude: 4
-              distance: 4
-              race: 0
-              direction: 0
-              maxTargets: 1
-            effect:
-              effect: {fileID: 0}
-            statistic:
-              stat: {fileID: 0}
-              operation: 0
-          random:
-            random: {x: 0, y: 0}
-    - rid: 5418049450134208607
-      type: {class: OnPassive, ns: , asm: LastOne}
-      data: 
-    - rid: 5418049450134208608
-      type: {class: NeighbourCondition, ns: , asm: LastOne}
-      data:
-        isActive: 1
-        Op: 0
-        direction: 1
-    - rid: 5418049450134208609
-      type: {class: RaceCondition, ns: , asm: LastOne}
-      data:
-        isActive: 1
-        Op: 0
-        race: 2
-    - rid: 5418049450134208610
-      type: {class: ChangeBehaviorCondition, ns: , asm: LastOne}
-      data:
-        isActive: 1
-        Op: 0
-        Target:
-          attitude: 4
-          distance: 4
-          race: 0
-          direction: 0
-          maxTargets: 1
-        effect: 0
-        statistic: 17
-        value:
-          number:
-            value: 0
-          percent:
-            percent: 5
-            target:
-              attitude: 4
-              distance: 4
-              race: 0
-              direction: 0
-              maxTargets: 1
-            effect:
-              effect: {fileID: 0}
-            statistic:
-              stat: {fileID: 0}
-              operation: 0
-          random:
-            random: {x: 0, y: 0}
+    - client: {fileID: 0}
+      Triggers:
+      - groupLogic: 1
+        op: 0
+        race: 
+        operation: 0
+        effect: 
+        stats: 
+        neighbours: 
+      - groupLogic: 1
+        op: 0
+        race: 
+        operation: 0
+        effect: 
+        stats: 
+        neighbours: 
+      Target:
+        attitude: 2
+        distance: 4
+        race: 0
+        direction: 0
+        maxTargets: 1
+      effect: 0
+      statistic: 0
+      value:
+        number:
+          value: 0
+        percent:
+          percent: 0
+          target:
+            attitude: 2
+            distance: 4
+            race: 0
+            direction: 0
+            maxTargets: 1
+          effect:
+            effect: {fileID: 0}
+          statistic:
+            stat: {fileID: 0}
+            operation: 0
+        random:
+          random: {x: 0, y: 0}
+    deffence:
+      maxHealh:
+        stat: 128
+        baseValue: 100
+      regeneration:
+        stat: 256
+        baseValue: 0
+      blockChance:
+        stat: 1
+        baseValue: 0
+      dodgeChance:
+        stat: 64
+        baseValue: 0
+    offence:
+      maxHealh:
+        stat: 128
+        baseValue: 100
+      regeneration:
+        stat: 256
+        baseValue: 0
+      blockChance:
+        stat: 1
+        baseValue: 0
+      dodgeChance:
+        stat: 64
+        baseValue: 0
+    isInstantActivation: 0
+    isActiveRang: 1
