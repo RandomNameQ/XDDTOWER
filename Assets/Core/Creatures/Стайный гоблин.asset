@@ -24,18 +24,11 @@ MonoBehaviour:
       Triggers:
       - groupLogic: 1
         op: 0
-        race: 
+        race: 01000000
         operation: 0
-        effect: 
+        effect: 02000000
         stats: 
-        neighbours: 
-      - groupLogic: 1
-        op: 0
-        race: 
-        operation: 0
-        effect: 
-        stats: 
-        neighbours: 
+        neighbours: 02000000
       Target:
         attitude: 2
         distance: 4

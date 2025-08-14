@@ -31,12 +31,13 @@ public class Trigger
     {
         None,
         Apply,
-        Recive,
+        Recevi,
         Remove
     }
     public List<GeneratedEnums.RaceId> race = new();
 
-    public Operation operation;
+    public List<GeneratedEnums.OperatinoId> operation = new();
+    public Operation effectInteraction;
     public List<GeneratedEnums.EffectId> effect = new();
     public List<GeneratedEnums.StatsId> stats = new();
     public List<GeneratedEnums.DirectionId> neighbours = new();

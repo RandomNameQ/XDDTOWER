@@ -13,6 +13,7 @@ public class GameDatabase : ScriptableObject
     public List<AttitudeSO> Attitudes = new();
     public List<DirectionSO> Directions = new();
     public List<StatsSO> Stats = new();
+    public List<OperatinoSO> Operation = new();
 
 #if UNITY_EDITOR
     [Button]
@@ -25,6 +26,7 @@ public class GameDatabase : ScriptableObject
         Attitudes.Clear();
         Directions.Clear();
         Stats.Clear();
+        Operation.Clear();
 
         foreach (var race in LoadAllAssets<RaceSO>())
             Races.Add(race);
@@ -46,6 +48,9 @@ public class GameDatabase : ScriptableObject
 
         foreach (var stats in LoadAllAssets<StatsSO>())
             Stats.Add(stats);
+
+        foreach (var operation in LoadAllAssets<OperatinoSO>())
+            Operation.Add(operation);
 
         UnityEditor.EditorUtility.SetDirty(this);
         UnityEditor.AssetDatabase.SaveAssets();

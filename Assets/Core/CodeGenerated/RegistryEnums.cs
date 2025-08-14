@@ -73,6 +73,18 @@ namespace GeneratedEnums
     }
 
     [Flags]
+    public enum OperatinoId : int
+    {
+        None = 0,
+        Buy = 1 << 0,
+        Died = 1 << 1,
+        Improve = 1 << 2,
+        Ressurected = 1 << 3,
+        Sell = 1 << 4,
+        Transform = 1 << 5,
+    }
+
+    [Flags]
     public enum RaceId : int
     {
         None = 0,
