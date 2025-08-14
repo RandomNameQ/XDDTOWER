@@ -32,7 +32,17 @@ public class BehaviorRule
             foreach (var t in Triggers)
             {
                 t?.Initialize(this);
+                t?.Subscribe();
             }
+        }
+    }
+
+    public void Unsubscribe()
+    {
+        if (Triggers == null) return;
+        foreach (var t in Triggers)
+        {
+            t?.Unsubscribe();
         }
     }
 

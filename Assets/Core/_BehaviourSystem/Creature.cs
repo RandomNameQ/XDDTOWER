@@ -64,6 +64,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     private void OnDisable()
     {
         All.Remove(this);
+        UnsubscribeAllRuntimeRules();
     }
     [Button]
     public void InitDataSO()
@@ -157,6 +158,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 
     private void BuildRuntimeRulesFromProfile()
     {
+        UnsubscribeAllRuntimeRules();
         runtimeRules.Clear();
         if (behaviorProfile == null || behaviorProfile.rangs == null || behaviorProfile.rangs.Count == 0) return;
         var runner = GetComponent<BehaviorRunner>();
@@ -168,6 +170,15 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
             var cloned = DeepCloneBehaviorRule(src);
             cloned.Initialize(this);
             runtimeRules.Add(cloned);
+        }
+    }
+
+    private void UnsubscribeAllRuntimeRules()
+    {
+        if (runtimeRules == null) return;
+        foreach (var rule in runtimeRules)
+        {
+            rule?.Unsubscribe();
         }
     }
 

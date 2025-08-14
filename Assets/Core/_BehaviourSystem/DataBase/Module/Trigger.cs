@@ -27,12 +27,13 @@ public class Trigger
     {
         OwnerRule = owner;
     }
+    [Flags]
     public enum Operation
     {
-        None,
-        Apply,
-        Recevi,
-        Remove
+        None = 0,
+        Apply = 1 << 0,
+        Recevi = 1 << 1,
+        Remove = 1 << 2
     }
     public List<GeneratedEnums.RaceId> race = new();
 
@@ -41,6 +42,37 @@ public class Trigger
     public List<GeneratedEnums.EffectId> effect = new();
     public List<GeneratedEnums.StatsId> stats = new();
     public List<GeneratedEnums.DirectionId> neighbours = new();
+
+    // Runtime state
+    private bool _isSubscribed;
+
+    // Lifecycle
+    public virtual void Subscribe()
+    {
+        if (_isSubscribed) return;
+
+        if ((effectInteraction & Operation.Apply) != 0) UnitEvent.OnUnitAppliedEffect += HandleUnitAppliedEffect;
+        if ((effectInteraction & Operation.Recevi) != 0) UnitEvent.OnUnitReceviEffect += HandleUnitReceivedEffect;
+        if (operation.Contains(GeneratedEnums.OperatinoId.Died)) UnitEvent.OnUnitDied += HandleUnitDied;
+
+        _isSubscribed = true;
+    }
+
+    public virtual void Unsubscribe()
+    {
+        if (!_isSubscribed) return;
+
+        UnitEvent.OnUnitAppliedEffect -= HandleUnitAppliedEffect;
+        UnitEvent.OnUnitReceviEffect -= HandleUnitReceivedEffect;
+        UnitEvent.OnUnitDied -= HandleUnitDied;
+
+        _isSubscribed = false;
+    }
+
+    // Default handlers (override in concrete triggers)
+    protected virtual void HandleUnitAppliedEffect(GeneratedEnums.EffectId effectId, Creature destiny, Creature source) { }
+    protected virtual void HandleUnitReceivedEffect(GeneratedEnums.EffectId effectId, Creature destiny, Creature source) { }
+    protected virtual void HandleUnitDied(Creature creature, Creature killer) { }
 
 }
 
