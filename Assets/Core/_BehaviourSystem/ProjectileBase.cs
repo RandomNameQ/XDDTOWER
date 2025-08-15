@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using UnityEngine;
 
 /// <summary>
@@ -13,8 +14,13 @@ public class ProjectileBase : MonoBehaviour
     /// <summary>
     /// Инициализация цели и коллбека применения эффекта при попадании.
     /// </summary>
-    public void Init(GameObject targetGo)
+    private Creature sources;
+    private Creature destiny;
+
+    public void Init(GameObject targetGo, Creature sources, Creature destiny)
     {
+        this.sources = sources;
+        this.destiny = destiny;
         target = targetGo;
     }
 
@@ -61,6 +67,7 @@ public class ProjectileBase : MonoBehaviour
 
     private void OnArrive()
     {
+        destiny.GetComponent<Creature>().decideBehavior.ApplyEffect(sources);
         Destroy(gameObject);
     }
 }

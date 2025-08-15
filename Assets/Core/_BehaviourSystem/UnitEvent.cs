@@ -10,10 +10,10 @@ public static class UnitEvent
         OnUnitDied?.Invoke(creature, killer);
     }
 
-    public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitReceviEffect;
+    public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitReceiveEffect;
     public static void OnUnitRecieveEffectEvent(GeneratedEnums.EffectId effect, Creature destiny, Creature source)
     {
-        OnUnitReceviEffect?.Invoke(effect, destiny, source);
+        OnUnitReceiveEffect?.Invoke(effect, destiny, source);
     }
 
     public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitAppliedEffect;

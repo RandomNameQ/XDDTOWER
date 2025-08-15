@@ -18,11 +18,12 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     public CreatureBehaviorProfileSO behaviorProfile;
     ScriptableObject ICreatureComponent.CreatureData { get => behaviorProfile; set => behaviorProfile = value as CreatureBehaviorProfileSO; }
     public Image image;
-    public Behavior behavior;
+    public DecideBehavior decideBehavior;
 
     [HideInInspector]
     public CreatureLife creatureLife;
 
+    public BehaviorRunner behaviorRunner;
     public enum TeamNumber
     {
         Zero,
@@ -47,8 +48,23 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
 
     private void Start()
     {
-        behavior = new(this);
+        decideBehavior = new(this);
+        InitCooldownTimer();
+
     }
+
+    private void InitCooldownTimer()
+    {
+        if (behaviorProfile == null || behaviorProfile.currentRang == null)
+        {
+            cooldownTimer = 0f;
+            return;
+        }
+        bool isInstant = behaviorProfile.currentRang.isInstantActivation;
+        float cooldownSeconds = GetAttackCooldownSeconds();
+        cooldownTimer = isInstant ? 0f : cooldownSeconds;
+    }
+
     private void OnEnable()
     {
         if (!All.Contains(this)) All.Add(this);
@@ -88,7 +104,8 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     {
         if (GetComponent<BehaviorRunner>() == null)
         {
-            gameObject.AddComponent<BehaviorRunner>();
+            behaviorRunner = gameObject.AddComponent<BehaviorRunner>();
+
         }
     }
 
@@ -232,23 +249,109 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     }
 
     [Serializable]
-    public class Behavior
+    public class DecideBehavior
     {
         public Creature creature;
 
-        public Behavior(Creature creature)
+        public DecideBehavior(Creature creature)
         {
             this.creature = creature;
         }
 
-        public void ApplyEffect(GeneratedEnums.EffectId effect)
+        public void ApplyEffect(Creature sources)
         {
-
+            var effect = sources.behaviorProfile.currentRang.rules[0].effect;
+            creature.creatureLife.HandleEffect(effect, sources);
         }
-        public void ReciveEffect()
-        {
 
-        }
 
     }
+
+    private void Update()
+    {
+        if (behaviorProfile == null || behaviorProfile.currentRang == null) return;
+        if (behaviorProfile.currentRang.isPasive) return;
+        UpdateCombatLoop();
+    }
+
+    private void UpdateCombatLoop()
+    {
+        if (!behaviorProfile.currentRang.isPasive)
+            AttackCooldownTick();
+    }
+
+    private void AttackCooldownTick()
+    {
+        if (behaviorProfile == null || behaviorProfile.currentRang == null) return;
+
+        float cooldownSeconds = GetAttackCooldownSeconds();
+        if (cooldownSeconds <= 0f)
+        {
+            cooldownTimer = 0f;
+            return;
+        }
+
+        cooldownTimer -= Time.deltaTime;
+        if (cooldownTimer > 0f) return;
+
+        PrepareUseEffect();
+
+    }
+
+    [Button]
+    public void PrepareUseEffect(Creature target = null)
+    {
+        var resolvedTarget = target ?? FindNearestEnemy();
+        if (resolvedTarget == null)
+        {
+            cooldownTimer = 0.2f;
+            return;
+        }
+
+        currentTarget = resolvedTarget;
+        SpawnProjectile(resolvedTarget);
+        cooldownTimer = GetAttackCooldownSeconds();
+    }
+
+    private float GetAttackCooldownSeconds()
+    {
+        var offence = behaviorProfile.currentRang.offence;
+        float value = offence != null ? offence.cooldown.baseValue : 0f;
+        if (value <= 0f) value = 1f;
+        return value;
+    }
+
+    private Creature FindNearestEnemy()
+    {
+        Creature nearest = null;
+        float nearestSqrDist = float.MaxValue;
+        foreach (var other in All)
+        {
+            if (other == null || other == this) continue;
+            if (other.teamNumber == teamNumber) continue;
+            if (!other.isActiveAndEnabled) continue;
+
+            float sqr = (other.transform.position - transform.position).sqrMagnitude;
+            if (sqr < nearestSqrDist)
+            {
+                nearestSqrDist = sqr;
+                nearest = other;
+            }
+        }
+        return nearest;
+    }
+
+    private void SpawnProjectile(Creature target)
+    {
+        if (behaviorProfile == null || behaviorProfile.spellPrefab == null) return;
+        var projGo = Instantiate(behaviorProfile.spellPrefab, transform.position, Quaternion.identity);
+        var projectile = projGo.GetComponent<ProjectileBase>();
+        if (projectile == null)
+        {
+            projectile = projGo.AddComponent<ProjectileBase>();
+        }
+        projectile.Init(target.gameObject, this, target);
+    }
+
+
 }
