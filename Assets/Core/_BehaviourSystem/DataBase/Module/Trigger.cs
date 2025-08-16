@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
+using Sirenix.OdinInspector;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
@@ -10,10 +12,28 @@ using UnityEngine;
 [Serializable]
 public class Trigger
 {
+    [Flags]
+    public enum Request
+    {
+        None = 0,
+        Reflect = 1 << 0,
+        Died = 1 << 1,
+    }
+
+    public enum Target
+    {
+        None,
+        Ally,
+        Me,
+        Enemy
+    }
+    public Request behaviour;
+    public Target target;
+
 
     public virtual void Initialize(BehaviorRule owner)
     {
-        OwnerRule = owner;
+        this.owner = owner;
     }
     [Flags]
     public enum Operation
@@ -32,8 +52,8 @@ public class Trigger
     public int groupLogic = 1;
 
 
-    public BehaviorRule OwnerRule { get; private set; }
-    public Creature Creature => OwnerRule?.client;
+    public BehaviorRule owner { get; private set; }
+    public Creature Creature => owner?.client;
 
     [Serializable]
     public class TriggerRequest
@@ -83,18 +103,26 @@ public class Trigger
     // Default handlers (override in concrete triggers)
     protected virtual void HandleUnitAppliedEffect(GeneratedEnums.EffectId effectId, Creature destiny, Creature source)
     {
+        if (owner.Triggers.Count == 0) return;
+
+        // Debug.Log($"HandleUnitAppliedEffect: {effectId} applied to {destiny?.name} by {source?.name}");
         responce.effect.Add(effectId);
         responce.destiny = destiny;
         responce.source = source;
     }
     protected virtual void HandleUnitReceivedEffect(GeneratedEnums.EffectId effectId, Creature destiny, Creature source)
     {
+        if (owner.Triggers.Count == 0) return;
+
+        // Debug.Log($"HandleUnitReceivedEffect: {effectId} received by {destiny?.name} from {source?.name}");
         responce.effect.Add(effectId);
         responce.destiny = destiny;
         responce.source = source;
 
         DecideTrigger();
+        ResetData();
     }
+
     protected virtual void HandleUnitDied(Creature creature, Creature killer)
     {
         responce.destiny = creature;
@@ -103,22 +131,67 @@ public class Trigger
 
 
     // тут решаем и исполнились ли все события для тригера
+    [Button]
     public void DecideTrigger()
     {
+        if ((behaviour & Request.Reflect) != 0)
+            Reflect();
 
-        ResetData();
+
 
         // if (!HasAnyElement(request.race, responce.race)) return;
         // if (!HasAnyElement(request.operation, responce.operation)) return;
-        // if (!HasAnyElement(request.effect, responce.effect)) return;
+
+        // Debug.Log("Request effects: " + string.Join(", ", request.effect));
+        // Debug.Log("Response effects: " + string.Join(", ", responce.effect));
         // if (!HasAnyElement(request.stats, responce.stats)) return;
 
-        // if(Creature.behaviorRunner.neighbors)
+
+        // Проверяем соседей только если указаны конкретные направления
+        // if (request.neighbours != null && request.neighbours.Count > 0)
+        //     if (!HasAnyElement(request.neighbours, Creature.behaviorRunner.neighbors.allSides)) return;
+
+    }
+    private bool IsEffect<T>(IEnumerable<T> collection1, IEnumerable<T> collection2)
+    {
+        return HasAnyElement(request.effect, responce.effect);
+    }
+    private bool IsNeighbours<T>(IEnumerable<T> collection1, IEnumerable<T> collection2)
+    {
+        if (request.neighbours == null || request.neighbours.Count == 0)
+            return false;
+
+
+        return HasAnyElement(collection1, collection2);
+    }
+
+    public void Reflect()
+    {
+        // если цель это я
+        // if (target == Target.Me && responce.destiny == Creature)
+        // проверяем тот ли тип полуичи
+
+        if (!IsEffect(request.effect, responce.effect)) return;
+        // есть ли нужный сосед
+        if (request.neighbours.Count != 0 && !IsNeighbours(request.neighbours, Creature.behaviorRunner.neighbors.allSides)) return;
+
 
         // тригер: когда получаю урон, то вызывюа эффект
         // баг - эффект вызывает у цели HandleUnitReceivedEffect, что вызывает этот же тригер
-        if (request.effectInteraction == Operation.Receive && responce.source != Creature)
+
+        // отслеэивать источник мне пока не надо наврено
+        // if (responce.source == Creature) return;
+
+
+
+        if (responce.destiny == Creature)
             ApplyEffect();
+
+
+
+        // Это не надо потому что я уже отражаю урон
+        // if (request.effectInteraction == Operation.Receive)
+
     }
     public void CollectDataFromEvent()
     {
@@ -129,6 +202,19 @@ public class Trigger
     public void ResetData()
     {
 
+        // Очищаем все списки
+        responce.race.Clear();
+        responce.operation.Clear();
+        responce.effect.Clear();
+        responce.stats.Clear();
+        responce.neighbours.Clear();
+
+        // Сбрасываем ссылочные типы
+        responce.destiny = null;
+        responce.source = null;
+
+        // Сбрасываем enum в значение по умолчанию
+        responce.effectInteraction = Operation.None;
     }
 
     public void ApplyEffect()

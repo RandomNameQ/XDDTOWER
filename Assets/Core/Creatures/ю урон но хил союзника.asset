@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28e7f756a55ac18459b0277a474e44dc, type: 3}
-  m_Name: "\u043E\u0442\u0432\u0435\u0447\u0430\u044E \u043A\u043E\u0433\u0434\u0430
-    \u043F\u043E\u0443\u043B\u0447\u0430\u044E \u0443\u0440\u043E\u043D"
+  m_Name: "\u044E \u0443\u0440\u043E\u043D \u043D\u043E \u0445\u0438\u043B \u0441\u043E\u044E\u0437\u043D\u0438\u043A\u0430"
   m_EditorClassIdentifier: 
-  id: 0ae4e75445d199302e2303b7e0595d0e
+  id: e656dc3cab0bf2667b0f001404e4570c
   image: {fileID: 0}
   size: {x: 1, y: 1}
   races: 01000000
@@ -47,12 +46,12 @@ MonoBehaviour:
           destiny: {fileID: 0}
           source: {fileID: 0}
       Target:
-        attitude: 2
+        attitude: 1
         distance: 4
         race: 0
         direction: 0
         maxTargets: 1
-      effect: 2
+      effect: 16
       statistic: 0
       value:
         number:
@@ -125,12 +124,12 @@ MonoBehaviour:
           destiny: {fileID: 0}
           source: {fileID: 0}
       Target:
-        attitude: 2
+        attitude: 1
         distance: 4
         race: 0
         direction: 0
         maxTargets: 1
-      effect: 2
+      effect: 16
       statistic: 0
       value:
         number:

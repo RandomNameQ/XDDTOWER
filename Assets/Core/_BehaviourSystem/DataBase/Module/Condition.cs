@@ -118,7 +118,7 @@ public class NeighbourCondition : Condition
         var runner = self.GetComponent<BehaviorRunner>();
         if (runner == null || runner.neighbors == null) return false;
 
-        List<Creature> list = null;
+        List<GeneratedEnums.DirectionId> list = null;
         switch (direction)
         {
             case DirectionId.Left: list = runner.neighbors.left; break;
@@ -131,8 +131,11 @@ public class NeighbourCondition : Condition
             case DirectionId.BackRight: list = runner.neighbors.backRight; break;
             default: return false;
         }
-        if (list == null) return false;
-        return list.Contains(target);
+        if (list == null || list.Count == 0) return false;
+        
+        // Проверяем, есть ли существа в указанном направлении
+        // Если в списке есть ANY направление, значит есть существа
+        return list.Contains(GeneratedEnums.DirectionId.ALL) || list.Contains(direction);
     }
 }
 

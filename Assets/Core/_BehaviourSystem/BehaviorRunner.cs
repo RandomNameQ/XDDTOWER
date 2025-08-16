@@ -114,6 +114,7 @@ public class BehaviorRunner : MonoBehaviour
             _owner.neighbors.frontRight.Clear();
             _owner.neighbors.backLeft.Clear();
             _owner.neighbors.backRight.Clear();
+            _owner.neighbors.allSides.Clear();
 
             if (placeable == null) return;
 
@@ -125,12 +126,15 @@ public class BehaviorRunner : MonoBehaviour
             AppendNeighbors(_owner.neighbors.frontRight, placeable, "UpRight");
             AppendNeighbors(_owner.neighbors.backLeft, placeable, "DownLeft");
             AppendNeighbors(_owner.neighbors.backRight, placeable, "DownRight");
+
+            // Заполняем allSides всеми направлениями, где есть соседи
+            UpdateAllSides();
         }
 
         /// <summary>
-        /// Добавляет всех соседей в указанном направлении в список существ.
+        /// Добавляет всех соседей в указанном направлении в список направлений.
         /// </summary>
-        private static void AppendNeighbors(List<Creature> list, Component placeable, string dirSuffix)
+        private static void AppendNeighbors(List<GeneratedEnums.DirectionId> list, Component placeable, string dirSuffix)
         {
             var directionType = TryResolveType("Core.BoardV2.Direction", "ZXC");
             if (directionType == null)
@@ -170,19 +174,82 @@ public class BehaviorRunner : MonoBehaviour
                 if (item is Component comp)
                 {
                     var c = comp.GetComponent<Creature>();
-                    if (c != null) list.Add(c);
+                    if (c != null) 
+                    {
+                        var directionId = ConvertDirectionToDirectionId(dirSuffix);
+                        if (directionId != GeneratedEnums.DirectionId.None)
+                        {
+                            list.Add(directionId);
+                        }
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// Добавляет одного соседнего компонента, если он содержит существо.
+        /// Добавляет одно направление в список, если сосед содержит существо.
         /// </summary>
-        private static void AppendNeighbor(List<Creature> list, Component neighbor)
+        private static void AppendNeighbor(List<GeneratedEnums.DirectionId> list, Component neighbor)
         {
             if (neighbor == null) return;
             var c = neighbor.GetComponent<Creature>();
-            if (c != null) list.Add(c);
+            if (c != null) 
+            {
+                // Добавляем направление ALL, так как у нас есть существо в этом направлении
+                list.Add(GeneratedEnums.DirectionId.ALL);
+            }
+        }
+
+        /// <summary>
+        /// Конвертирует строковое направление в DirectionId.
+        /// </summary>
+        private static GeneratedEnums.DirectionId ConvertDirectionToDirectionId(string dirSuffix)
+        {
+            return dirSuffix switch
+            {
+                "Left" => GeneratedEnums.DirectionId.Left,
+                "Right" => GeneratedEnums.DirectionId.Right,
+                "Up" => GeneratedEnums.DirectionId.Front,
+                "Down" => GeneratedEnums.DirectionId.Back,
+                "UpLeft" => GeneratedEnums.DirectionId.FrontLeft,
+                "UpRight" => GeneratedEnums.DirectionId.FrontRight,
+                "DownLeft" => GeneratedEnums.DirectionId.BackLeft,
+                "DownRight" => GeneratedEnums.DirectionId.BackRight,
+                _ => GeneratedEnums.DirectionId.None
+            };
+        }
+
+        /// <summary>
+        /// Обновляет allSides всеми направлениями, где есть соседи.
+        /// </summary>
+        private void UpdateAllSides()
+        {
+            if (_owner.neighbors == null) return;
+
+            // Добавляем направления, где есть соседи
+            if (_owner.neighbors.left.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Left);
+            
+            if (_owner.neighbors.right.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Right);
+            
+            if (_owner.neighbors.front.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Front);
+            
+            if (_owner.neighbors.back.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Back);
+            
+            if (_owner.neighbors.frontLeft.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.FrontLeft);
+            
+            if (_owner.neighbors.frontRight.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.FrontRight);
+            
+            if (_owner.neighbors.backLeft.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.BackLeft);
+            
+            if (_owner.neighbors.backRight.Count > 0)
+                _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.BackRight);
         }
 
         /// <summary>
@@ -246,14 +313,15 @@ public class BehaviorRunner : MonoBehaviour
     [Serializable]
     public class Neighbor
     {
-        public List<Creature> left = new();
-        public List<Creature> right = new();
-        public List<Creature> front = new();
-        public List<Creature> back = new();
-        public List<Creature> frontLeft = new();
-        public List<Creature> frontRight = new();
-        public List<Creature> backLeft = new();
-        public List<Creature> backRight = new();
+        public List<GeneratedEnums.DirectionId> left = new();
+        public List<GeneratedEnums.DirectionId> right = new();
+        public List<GeneratedEnums.DirectionId> front = new();
+        public List<GeneratedEnums.DirectionId> back = new();
+        public List<GeneratedEnums.DirectionId> frontLeft = new();
+        public List<GeneratedEnums.DirectionId> frontRight = new();
+        public List<GeneratedEnums.DirectionId> backLeft = new();
+        public List<GeneratedEnums.DirectionId> backRight = new();
+        public List<GeneratedEnums.DirectionId> allSides = new();
     }
     /// <summary>
     /// Публичный доступ к соседям для инспектора/других систем.
@@ -296,6 +364,8 @@ public class BehaviorRunner : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) return;
+        
         _neighborsLogic?.UpdateIfNeeded();
     }
 
@@ -312,7 +382,123 @@ public class BehaviorRunner : MonoBehaviour
     /// </summary>
     public void UpdateNeighbors()
     {
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) return;
+        
         _neighborsLogic?.UpdateNeighbors();
+    }
+
+    /// <summary>
+    /// Получить существ в указанном направлении.
+    /// </summary>
+    public List<Creature> GetCreaturesInDirection(GeneratedEnums.DirectionId direction)
+    {
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) 
+            return new List<Creature>();
+            
+        var result = new List<Creature>();
+        if (neighbors == null) return result;
+
+        var directionList = GetDirectionList(direction);
+        if (directionList != null && directionList.Count > 0)
+        {
+            var placeable = GetPlaceableComponent(gameObject);
+            if (placeable != null)
+            {
+                var dirSuffix = ConvertDirectionIdToString(direction);
+                if (!string.IsNullOrEmpty(dirSuffix))
+                {
+                    var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
+                    if (neighbor != null)
+                    {
+                        var creature = neighbor.GetComponent<Creature>();
+                        if (creature != null && (creature.creatureLife == null || !creature.creatureLife.isDead))
+                        {
+                            result.Add(creature);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Получить список направлений для указанного DirectionId.
+    /// </summary>
+    private List<GeneratedEnums.DirectionId> GetDirectionList(GeneratedEnums.DirectionId direction)
+    {
+        return direction switch
+        {
+            GeneratedEnums.DirectionId.Left => neighbors.left,
+            GeneratedEnums.DirectionId.Right => neighbors.right,
+            GeneratedEnums.DirectionId.Front => neighbors.front,
+            GeneratedEnums.DirectionId.Back => neighbors.back,
+            GeneratedEnums.DirectionId.FrontLeft => neighbors.frontLeft,
+            GeneratedEnums.DirectionId.FrontRight => neighbors.frontRight,
+            GeneratedEnums.DirectionId.BackLeft => neighbors.backLeft,
+            GeneratedEnums.DirectionId.BackRight => neighbors.backRight,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Конвертирует DirectionId в строковое представление для вызова методов.
+    /// </summary>
+    private string ConvertDirectionIdToString(GeneratedEnums.DirectionId directionId)
+    {
+        return directionId switch
+        {
+            GeneratedEnums.DirectionId.Left => "Left",
+            GeneratedEnums.DirectionId.Right => "Right",
+            GeneratedEnums.DirectionId.Front => "Up",
+            GeneratedEnums.DirectionId.Back => "Down",
+            GeneratedEnums.DirectionId.FrontLeft => "UpLeft",
+            GeneratedEnums.DirectionId.FrontRight => "UpRight",
+            GeneratedEnums.DirectionId.BackLeft => "DownLeft",
+            GeneratedEnums.DirectionId.BackRight => "DownRight",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Вызывает метод получения соседа по имени через рефлексию.
+    /// </summary>
+    private Component CallNeighbor(Component comp, string methodName)
+    {
+        if (comp == null) return null;
+        var mi = comp.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (mi == null) return null;
+        var v = mi.Invoke(comp, null) as Component;
+        return v;
+    }
+
+    /// <summary>
+    /// Возвращает компонент размещаемого объекта из грид-системы через тип по имени.
+    /// </summary>
+    private Component GetPlaceableComponent(GameObject go)
+    {
+        var t = TryResolveType("Core.BoardV2.PlaceableObject", "ZXC");
+        if (t == null) return null;
+        return go.GetComponent(t);
+    }
+
+    /// <summary>
+    /// Пытается получить тип по полному имени из загруженных сборок.
+    /// </summary>
+    private Type TryResolveType(string fullName, string assemblyName)
+    {
+        var t = Type.GetType(fullName + ", " + assemblyName, false);
+        if (t != null) return t;
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                t = asm.GetType(fullName, false);
+                if (t != null) return t;
+            }
+            catch { }
+        }
+        return null;
     }
 
     /// <summary>

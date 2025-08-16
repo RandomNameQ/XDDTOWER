@@ -22,6 +22,32 @@ public class ProjectileBase : MonoBehaviour
         this.sources = sources;
         this.destiny = destiny;
         target = targetGo;
+        
+        SetInitialPosition();
+        RotateToTargetImmediately();
+        StartMovement();
+    }
+
+    private void SetInitialPosition()
+    {
+        Vector3 currentPos = transform.position;
+        transform.position = new Vector3(currentPos.x, currentPos.y + 1f, currentPos.z);
+    }
+
+    private void RotateToTargetImmediately()
+    {
+        if (target == null) return;
+        Vector3 direction = (target.transform.position - transform.position).normalized;
+        if (direction == Vector3.zero) return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = targetRotation;
+        _isFacingTarget = true;
+    }
+
+    private void StartMovement()
+    {
+        _isFacingTarget = true;
     }
 
     private void Update()

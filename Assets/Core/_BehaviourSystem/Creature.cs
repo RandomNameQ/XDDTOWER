@@ -271,6 +271,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     {
         if (behaviorProfile == null || behaviorProfile.currentRang == null) return;
         if (behaviorProfile.currentRang.isPasive) return;
+        if (creatureLife != null && creatureLife.isDead) return;
         UpdateCombatLoop();
     }
 
@@ -283,6 +284,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     private void AttackCooldownTick()
     {
         if (behaviorProfile == null || behaviorProfile.currentRang == null) return;
+        if (creatureLife != null && creatureLife.isDead) return;
 
         float cooldownSeconds = GetAttackCooldownSeconds();
         if (cooldownSeconds <= 0f)
@@ -301,7 +303,9 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     [Button]
     public void PrepareUseEffect(Creature target = null)
     {
-        var resolvedTarget = target ?? FindNearestEnemy();
+        if (creatureLife != null && creatureLife.isDead) return;
+        
+        var resolvedTarget = target ?? FindTarget();
         if (resolvedTarget == null)
         {
             cooldownTimer = 0.2f;
@@ -321,15 +325,41 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         return value;
     }
 
-    private Creature FindNearestEnemy()
+    private Creature FindTarget()
     {
-        Creature nearest = null;
+        if (creatureLife != null && creatureLife.isDead) return null;
+        
+        var candidates = new List<Creature>();
+
+        switch (behaviorProfile.currentRang.rules[0].Target.attitude)
+        {
+            case GeneratedEnums.AttitudeId.Enemy:
+                GetEnemyCandidates(candidates);
+                break;
+            case GeneratedEnums.AttitudeId.Ally:
+                GetAllyCandidates(candidates);
+                break;
+            case GeneratedEnums.AttitudeId.Me:
+                GetSelfCandidates(candidates);
+                break;
+            case GeneratedEnums.AttitudeId.Random:
+                GetRandomCandidates(candidates);
+                break;
+            case GeneratedEnums.AttitudeId.None:
+            default:
+                return null;
+        }
+
+        if (candidates.Count == 0) return null;
+
+        Creature nearest = candidates[0];
         float nearestSqrDist = float.MaxValue;
-        foreach (var other in All)
+
+        foreach (var other in candidates)
         {
             if (other == null || other == this) continue;
-            if (other.teamNumber == teamNumber) continue;
             if (!other.isActiveAndEnabled) continue;
+            if (other.creatureLife != null && other.creatureLife.isDead) continue;
 
             float sqr = (other.transform.position - transform.position).sqrMagnitude;
             if (sqr < nearestSqrDist)
@@ -341,9 +371,54 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         return nearest;
     }
 
+    private void GetEnemyCandidates(List<Creature> candidates)
+    {
+        foreach (var other in All)
+        {
+            if (other == null || other == this) continue;
+            if (other.teamNumber == teamNumber) continue;
+            if (!other.isActiveAndEnabled) continue;
+            if (other.creatureLife != null && other.creatureLife.isDead) continue;
+            candidates.Add(other);
+        }
+    }
+
+    private void GetAllyCandidates(List<Creature> candidates)
+    {
+        foreach (var other in All)
+        {
+            if (other == null || other == this) continue;
+            if (other.teamNumber != teamNumber) continue;
+            if (!other.isActiveAndEnabled) continue;
+            if (other.creatureLife != null && other.creatureLife.isDead) continue;
+            candidates.Add(other);
+        }
+    }
+
+    private void GetSelfCandidates(List<Creature> candidates)
+    {
+        if (isActiveAndEnabled && (creatureLife == null || !creatureLife.isDead))
+        {
+            candidates.Add(this);
+        }
+    }
+
+    private void GetRandomCandidates(List<Creature> candidates)
+    {
+        foreach (var other in All)
+        {
+            if (other == null || other == this) continue;
+            if (!other.isActiveAndEnabled) continue;
+            if (other.creatureLife != null && other.creatureLife.isDead) continue;
+            candidates.Add(other);
+        }
+    }
+
     private void SpawnProjectile(Creature target)
     {
         if (behaviorProfile == null || behaviorProfile.spellPrefab == null) return;
+        if (creatureLife != null && creatureLife.isDead) return;
+        
         var projGo = Instantiate(behaviorProfile.spellPrefab, transform.position, Quaternion.identity);
         var projectile = projGo.GetComponent<ProjectileBase>();
         if (projectile == null)
@@ -351,6 +426,24 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
             projectile = projGo.AddComponent<ProjectileBase>();
         }
         projectile.Init(target.gameObject, this, target);
+    }
+
+    public void OnDeath(Creature source = null)
+    {
+        if (behaviorRunner != null)
+        {
+            behaviorRunner.enabled = false;
+        }
+        
+        if (decideBehavior != null)
+        {
+            decideBehavior = null;
+        }
+        
+        currentTarget = null;
+        cooldownTimer = 0f;
+        
+        UnitEvent.OnUnitDiedsEvent(this, source);
     }
 
 

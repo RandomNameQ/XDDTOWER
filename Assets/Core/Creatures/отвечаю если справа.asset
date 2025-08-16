@@ -23,7 +23,9 @@ MonoBehaviour:
     rules:
     - client: {fileID: 0}
       Triggers:
-      - op: 0
+      - behaviour: 1
+        target: 2
+        op: 0
         groupLogic: 1
         request:
           race: 
@@ -99,7 +101,9 @@ MonoBehaviour:
   - rules:
     - client: {fileID: 0}
       Triggers:
-      - op: 0
+      - behaviour: 1
+        target: 2
+        op: 0
         groupLogic: 1
         request:
           race: 

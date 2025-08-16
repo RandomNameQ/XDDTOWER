@@ -1,4 +1,5 @@
 using System.Collections;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using UnityEngine.UI;
@@ -11,9 +12,13 @@ public class CreatureLife : MonoBehaviour
     public Image life;
     [Range(0, 100)]
     public int lifeValue;
+    
+    [Header("Death State")]
+    public bool isDead;
 
     private void Reset()
     {
+        isDead = false;
         if (life == null)
         {
             life = GetComponent<Image>();
@@ -23,7 +28,7 @@ public class CreatureLife : MonoBehaviour
 
     private void Start()
     {
-
+        isDead = false;
         StartCoroutine(ASd());
         target = GetComponentInChildren<Creature>();
         UpdateFill();
@@ -42,6 +47,10 @@ public class CreatureLife : MonoBehaviour
     private void OnValidate()
     {
         UpdateFill();
+        if (Application.isPlaying)
+        {
+            CheckDeath();
+        }
     }
 
     public void SetLife(int current, int max)
@@ -49,6 +58,7 @@ public class CreatureLife : MonoBehaviour
         maxLife = Mathf.Max(1, max);
         currentLife = Mathf.Clamp(current, 0, maxLife);
         UpdateFill();
+        CheckDeath();
     }
 
     private void UpdateFill()
@@ -62,12 +72,10 @@ public class CreatureLife : MonoBehaviour
 
         if (!Application.isPlaying)
         {
-            // В редакторе (вне Play Mode) используем lifeValue как процент
             fill = Mathf.Clamp01(lifeValue / 100f);
         }
         else
         {
-            // Во время игры используем текущее/максимальное здоровье
             float max = Mathf.Max(1, maxLife);
             float current = Mathf.Clamp(currentLife, 0, (int)max);
             fill = Mathf.Clamp01(current / max);
@@ -100,6 +108,7 @@ public class CreatureLife : MonoBehaviour
 
         }
         UpdateFill();
+        CheckDeath();
 
         UnitEvent.OnUnitRecieveEffectEvent(effect, target, sources);
         UnitEvent.OnUnitAppliedEffectEvent(effect, target, sources);
@@ -108,8 +117,6 @@ public class CreatureLife : MonoBehaviour
 
     public void HandleOffenceData()
     {
-        // тут считаем нанесли ли нам крити
-        // улониоись ли мы и прочее
     }
 
     public void HandleDamageEffect()
@@ -124,14 +131,32 @@ public class CreatureLife : MonoBehaviour
 
     public int FindValueEffectData()
     {
-        // !TODO фиксануть лист и прочее
         valueEffect = sources.behaviorProfile.currentRang.rules[0].value.number.value;
         return valueEffect;
     }
 
+    private void CheckDeath()
+    {
+        if (!isDead && currentLife <= 0)
+        {
+            isDead = true;
+            UnitDied();
+        }
+    }
 
+    [Button]
     public void UnitDied()
     {
+        if (target == null) return;
+        
+        target.OnDeath(sources);
+        
+        if (life != null)
+        {
+            life.enabled = false;
+        }
+        
+        gameObject.SetActive(false);
     }
 
 }
