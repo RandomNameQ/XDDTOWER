@@ -24,8 +24,8 @@ public class Trigger
     {
         None,
         Ally,
-        Me,
-        Enemy
+        Enemy,
+        Any
     }
     public Request behaviour;
     public Target target;
@@ -134,8 +134,9 @@ public class Trigger
     [Button]
     public void DecideTrigger()
     {
-        if ((behaviour & Request.Reflect) != 0)
-            Reflect();
+
+        if ((behaviour & Request.Reflect) != 0) Reflect();
+        if ((behaviour & Request.Reflect) != 0 && target == Target.None) ReflectForUnit();
 
 
 
@@ -165,6 +166,12 @@ public class Trigger
         return HasAnyElement(collection1, collection2);
     }
 
+    // реагируем когда раса или attitude(кроме меня) получает эффект
+    public void ReflectForUnit()
+    {
+
+    }
+
     public void Reflect()
     {
         // если цель это я
@@ -172,9 +179,75 @@ public class Trigger
         // проверяем тот ли тип полуичи
 
         if (!IsEffect(request.effect, responce.effect)) return;
-        // есть ли нужный сосед
-        if (request.neighbours.Count != 0 && !IsNeighbours(request.neighbours, Creature.behaviorRunner.neighbors.allSides)) return;
 
+        if (target != Target.None)
+        {
+
+            // есть баг? - если наш тригер "когда враг получает эффект-урон" и этот обьект наносит урон этому обьекту, то появлется бесконечный цикл
+            var hittedTarget = responce.destiny;
+            var teamNumber = Creature.teamNumber;
+
+            // какая-то цель получила эффект - мы получили ее расу и сравнили с тем, что ищем
+            var isAlly = teamNumber == hittedTarget.teamNumber;
+
+            var isFindRace = request.race.Count != 0;
+            var isRace = HasAnyElement(hittedTarget.behaviorProfile.races, request.race);
+
+            if (target == Target.Ally && isAlly)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+
+
+            }
+            if (target == Target.Enemy && !isAlly)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+            if (target == Target.Any)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+
+        }
+        else
+        {
+            // когда владелец получает эффект и условие соседа
+            // есть ли нужный сосед
+            if (request.neighbours.Count != 0 && !IsNeighbours(request.neighbours, Creature.behaviorRunner.neighbors.allSides)) return;
+
+
+
+            if (responce.destiny == Creature)
+                ApplyEffect();
+        }
+
+
+
+        // как мне узнать получил ли союзник-враг-раса какой-то эффект
 
         // тригер: когда получаю урон, то вызывюа эффект
         // баг - эффект вызывает у цели HandleUnitReceivedEffect, что вызывает этот же тригер
@@ -184,8 +257,7 @@ public class Trigger
 
 
 
-        if (responce.destiny == Creature)
-            ApplyEffect();
+
 
 
 

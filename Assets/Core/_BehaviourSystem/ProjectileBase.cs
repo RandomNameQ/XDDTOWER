@@ -22,7 +22,7 @@ public class ProjectileBase : MonoBehaviour
         this.sources = sources;
         this.destiny = destiny;
         target = targetGo;
-        
+
         SetInitialPosition();
         RotateToTargetImmediately();
         StartMovement();
@@ -64,7 +64,11 @@ public class ProjectileBase : MonoBehaviour
 
     private void RotateToTarget()
     {
-        if (target == null) return;
+        if (target == null) 
+        {
+            DestroyProjectile();
+            return;
+        }
         Vector3 direction = (target.transform.position - transform.position).normalized;
         if (direction == Vector3.zero) return;
 
@@ -79,21 +83,50 @@ public class ProjectileBase : MonoBehaviour
 
     private void MoveToTarget()
     {
-        if (target == null) return;
+        if (target == null) 
+        {
+            DestroyProjectile();
+            return;
+        }
         Vector3 direction = (target.transform.position - transform.position).normalized;
         transform.position += direction * speed * Time.deltaTime;
     }
 
     private void TryArrive()
     {
-        if (target == null) return;
+        if (target == null) 
+        {
+            DestroyProjectile();
+            return;
+        }
         float distance = Vector3.Distance(transform.position, target.transform.position);
         if (distance <= 0.1f) OnArrive();
     }
 
     private void OnArrive()
     {
-        destiny.GetComponent<Creature>().decideBehavior.ApplyEffect(sources);
-        Destroy(gameObject);
+        if (destiny == null || sources == null)
+        {
+            DestroyProjectile();
+            return;
+        }
+
+        Creature destinyCreature = destiny.GetComponent<Creature>();
+        if (destinyCreature == null || destinyCreature.decideBehavior == null)
+        {
+            DestroyProjectile();
+            return;
+        }
+
+        destinyCreature.decideBehavior.ApplyEffect(sources);
+        DestroyProjectile();
+    }
+
+    private void DestroyProjectile()
+    {
+        if (gameObject != null)
+        {
+            Destroy(gameObject);
+        }
     }
 }

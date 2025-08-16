@@ -33,7 +33,7 @@ MonoBehaviour:
       statistic: 0
       value:
         number:
-          value: 5
+          value: 1
         percent:
           percent: 0
           target:
@@ -89,7 +89,7 @@ MonoBehaviour:
       statistic: 0
       value:
         number:
-          value: 5
+          value: 1
         percent:
           percent: 0
           target:
