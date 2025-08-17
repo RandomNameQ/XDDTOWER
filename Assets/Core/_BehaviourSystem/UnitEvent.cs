@@ -5,9 +5,9 @@ using UnityEngine;
 public static class UnitEvent
 {
     public static event Action<Creature, Creature> OnUnitDied;
-    public static void OnUnitDiedsEvent(Creature creature, Creature killer)
+    public static void OnUnitDiedsEvent(Creature destiny, Creature source)
     {
-        OnUnitDied?.Invoke(creature, killer);
+        OnUnitDied?.Invoke(destiny, source);
     }
 
     public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitReceiveEffect;

@@ -11,6 +11,7 @@ public abstract class RegistryItemSO : ScriptableObject
 
     public string Id => id;
     public virtual string DisplayName => name;
+    public string description;
 
 #if UNITY_EDITOR
     protected virtual void OnValidate()

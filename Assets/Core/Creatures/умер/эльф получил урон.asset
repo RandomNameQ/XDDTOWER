@@ -28,7 +28,7 @@ MonoBehaviour:
         op: 0
         groupLogic: 1
         request:
-          race: 01000000
+          race: 
           operation: 
           effectInteraction: 2
           effect: 02000000
@@ -36,6 +36,8 @@ MonoBehaviour:
           neighbours: 
           destiny: {fileID: 0}
           source: {fileID: 0}
+          victimCreature: {fileID: 0}
+          killerCreature: {fileID: 0}
         responce:
           race: 
           operation: 
@@ -45,6 +47,10 @@ MonoBehaviour:
           neighbours: 
           destiny: {fileID: 0}
           source: {fileID: 0}
+          victimCreature: {fileID: 0}
+          killerCreature: {fileID: 0}
+        targetFromTrigger: {fileID: 0}
+        isGetTargetFromTrigger: 0
       Target:
         attitude: 2
         distance: 4
@@ -106,7 +112,7 @@ MonoBehaviour:
         op: 0
         groupLogic: 1
         request:
-          race: 01000000
+          race: 
           operation: 
           effectInteraction: 2
           effect: 02000000
@@ -114,6 +120,8 @@ MonoBehaviour:
           neighbours: 
           destiny: {fileID: 0}
           source: {fileID: 0}
+          victimCreature: {fileID: 0}
+          killerCreature: {fileID: 0}
         responce:
           race: 
           operation: 
@@ -123,6 +131,10 @@ MonoBehaviour:
           neighbours: 
           destiny: {fileID: 0}
           source: {fileID: 0}
+          victimCreature: {fileID: 0}
+          killerCreature: {fileID: 0}
+        targetFromTrigger: {fileID: 0}
+        isGetTargetFromTrigger: 0
       Target:
         attitude: 2
         distance: 4

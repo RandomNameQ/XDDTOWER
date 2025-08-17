@@ -7,7 +7,7 @@ using UnityEngine;
 public class BehaviorRule
 {
 
-    [HideInInspector]
+    [HideInInspector, SerializeReference]
     public Creature client;
 
     [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]

@@ -24,6 +24,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     public CreatureLife creatureLife;
 
     public BehaviorRunner behaviorRunner;
+    public Image cooldownPanel;
     public enum TeamNumber
     {
         Zero,
@@ -278,7 +279,25 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     private void UpdateCombatLoop()
     {
         if (!behaviorProfile.currentRang.isPasive)
+        {
             AttackCooldownTick();
+            UpdateCooldownUI();
+        }
+    }
+
+    private void UpdateCooldownUI()
+    {
+        if (cooldownPanel == null) return;
+
+        float cooldownSeconds = GetAttackCooldownSeconds();
+        if (cooldownSeconds <= 0f)
+        {
+            cooldownPanel.fillAmount = 0f;
+            return;
+        }
+
+        float fillAmount = cooldownTimer / cooldownSeconds;
+        cooldownPanel.fillAmount = Mathf.Clamp01(fillAmount);
     }
 
     private void AttackCooldownTick()
@@ -304,11 +323,10 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     public void PrepareUseEffect(Creature target = null)
     {
         if (creatureLife != null && creatureLife.isDead) return;
-        
+
         var resolvedTarget = target ?? FindTarget();
         if (resolvedTarget == null)
         {
-            cooldownTimer = 0.2f;
             return;
         }
 
@@ -324,12 +342,36 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         if (value <= 0f) value = 1f;
         return value;
     }
+    private bool HasAnyElement<T>(IEnumerable<T> collection1, IEnumerable<T> collection2)
+    {
+        foreach (var item1 in collection1)
+        {
+            foreach (var item2 in collection2)
+            {
+                if (item1.Equals(item2))
+                    return true;
+            }
+        }
+        return false;
+    }
 
     private Creature FindTarget()
     {
         if (creatureLife != null && creatureLife.isDead) return null;
-        
+
         var candidates = new List<Creature>();
+        Creature target = null;
+        if (behaviorProfile.currentRang.rules[0].Target.direction != GeneratedEnums.DirectionId.None)
+        {
+            // если надо взять цель со стороны 
+            var direction = behaviorProfile.currentRang.rules[0].Target.direction;
+            target = behaviorRunner.GetCreaturesByDirection(direction).FirstOrDefault();
+
+            bool needRace = behaviorProfile.currentRang.rules[0].Target.race != GeneratedEnums.RaceId.None;
+        }
+
+        // если нашли цель по условияем, то возвращем, иначе ищем по дистанции
+        if (target != null) return target;
 
         switch (behaviorProfile.currentRang.rules[0].Target.attitude)
         {
@@ -418,7 +460,7 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
     {
         if (behaviorProfile == null || behaviorProfile.spellPrefab == null) return;
         if (creatureLife != null && creatureLife.isDead) return;
-        
+
         var projGo = Instantiate(behaviorProfile.spellPrefab, transform.position, Quaternion.identity);
         var projectile = projGo.GetComponent<ProjectileBase>();
         if (projectile == null)
@@ -434,17 +476,32 @@ public class Creature : MonoBehaviour, ICreatureComponent, IInitFromSO
         {
             behaviorRunner.enabled = false;
         }
-        
+
         if (decideBehavior != null)
         {
             decideBehavior = null;
         }
-        
+
         currentTarget = null;
         cooldownTimer = 0f;
-        
-        UnitEvent.OnUnitDiedsEvent(this, source);
-    }
 
+        // UnitEvent.OnUnitDiedsEvent(this, source);
+    }
+    [Button]
+    public void ChargeCooldown(float time)
+    {
+        float cooldownSeconds = GetAttackCooldownSeconds();
+        if (cooldownSeconds <= 0f) return;
+
+        cooldownTimer = Mathf.Max(0f, cooldownTimer - time);
+
+        if (cooldownTimer <= 0f)
+        {
+            PrepareUseEffect();
+            cooldownTimer = cooldownSeconds - time;
+        }
+
+        UpdateCooldownUI();
+    }
 
 }

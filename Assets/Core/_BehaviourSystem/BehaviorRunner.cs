@@ -423,6 +423,36 @@ public class BehaviorRunner : MonoBehaviour
     }
 
     /// <summary>
+    /// Простой метод для получения существ по направлению стороны.
+    /// </summary>
+    public List<Creature> GetCreaturesByDirection(GeneratedEnums.DirectionId direction)
+    {
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) 
+            return new List<Creature>();
+            
+        var result = new List<Creature>();
+        if (neighbors == null) return result;
+
+        var placeable = GetPlaceableComponent(gameObject);
+        if (placeable == null) return result;
+
+        var dirSuffix = ConvertDirectionIdToString(direction);
+        if (string.IsNullOrEmpty(dirSuffix)) return result;
+
+        var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
+        if (neighbor != null)
+        {
+            var creature = neighbor.GetComponent<Creature>();
+            if (creature != null && (creature.creatureLife == null || !creature.creatureLife.isDead))
+            {
+                result.Add(creature);
+            }
+        }
+        
+        return result;
+    }
+
+    /// <summary>
     /// Получить список направлений для указанного DirectionId.
     /// </summary>
     private List<GeneratedEnums.DirectionId> GetDirectionList(GeneratedEnums.DirectionId direction)

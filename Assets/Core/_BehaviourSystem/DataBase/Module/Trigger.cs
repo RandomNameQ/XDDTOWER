@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
+using Sirenix.OdinInspector.Editor.TypeSearch;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
@@ -25,7 +26,8 @@ public class Trigger
         None,
         Ally,
         Enemy,
-        Any
+        Any,
+        Me
     }
     public Request behaviour;
     public Target target;
@@ -51,8 +53,8 @@ public class Trigger
     public Operator op = Operator.And;
     public int groupLogic = 1;
 
-
-    public BehaviorRule owner { get; private set; }
+    [NonSerialized]
+    public BehaviorRule owner;
     public Creature Creature => owner?.client;
 
     [Serializable]
@@ -66,9 +68,14 @@ public class Trigger
         public List<GeneratedEnums.DirectionId> neighbours = new();
         public Creature destiny;
         public Creature source;
+        public Creature victimCreature;
+        public Creature killerCreature;
     }
     public TriggerRequest request;
     public TriggerRequest responce;
+
+    public Creature targetFromTrigger;
+    public bool isGetTargetFromTrigger;
 
 
 
@@ -109,6 +116,9 @@ public class Trigger
         responce.effect.Add(effectId);
         responce.destiny = destiny;
         responce.source = source;
+
+        DecideTrigger();
+        ResetData();
     }
     protected virtual void HandleUnitReceivedEffect(GeneratedEnums.EffectId effectId, Creature destiny, Creature source)
     {
@@ -125,8 +135,11 @@ public class Trigger
 
     protected virtual void HandleUnitDied(Creature creature, Creature killer)
     {
-        responce.destiny = creature;
-        responce.source = killer;
+        responce.victimCreature = creature;
+        responce.killerCreature = killer;
+
+        DecideTrigger();
+        ResetData();
     }
 
 
@@ -136,7 +149,9 @@ public class Trigger
     {
 
         if ((behaviour & Request.Reflect) != 0) Reflect();
-        if ((behaviour & Request.Reflect) != 0 && target == Target.None) ReflectForUnit();
+        if ((behaviour & Request.Died) != 0) DiedTrigger();
+        if (request.effectInteraction == Operation.Apply) TargetApply();
+        // if ((request.operation & GeneratedEnums.OperatinoId.Died) != 0 || trigg) DiedTrigger();
 
 
 
@@ -165,13 +180,193 @@ public class Trigger
 
         return HasAnyElement(collection1, collection2);
     }
-
-    // реагируем когда раса или attitude(кроме меня) получает эффект
-    public void ReflectForUnit()
+    [Button]
+    private List<Creature> GetSideTargets(List<GeneratedEnums.DirectionId> sides)
+    {
+        List<Creature> targets = new();
+        foreach (var side in sides)
+        {
+            var creaturesInDirection = Creature.behaviorRunner.GetCreaturesByDirection(side);
+            if (creaturesInDirection != null)
+            {
+                targets.AddRange(creaturesInDirection);
+            }
+        }
+        return targets;
+    }
+    public void DiedTrigger()
     {
 
+
+        if (target != Target.None)
+        {
+            if (request.neighbours.Count != 0)
+            {
+                // допустим если справа от меня умирает юнит
+                List<GeneratedEnums.DirectionId> reqsetSide = request.neighbours;
+                var sideTargets = GetSideTargets(reqsetSide);
+
+                // теперь надо узнать находятся ли эти юниты в убитых
+                bool isKilledUnitFinded = false;
+                foreach (var unit in sideTargets)
+                {
+                    // responce.killerCreature это убийца victimCreature
+                    if (unit == responce.victimCreature)
+                    {
+                        isKilledUnitFinded = true;
+                    }
+                }
+                if (!isKilledUnitFinded) return;
+            }
+
+
+            var victim = responce.victimCreature;
+            var killer = responce.killerCreature;
+
+            var teamNumber = Creature.teamNumber;
+            var isAlly = teamNumber == victim.teamNumber;
+
+            var isFindRace = request.race.Count != 0;
+            var isRace = HasAnyElement(victim.behaviorProfile.races, request.race);
+
+
+            if (target == Target.Ally && isAlly)
+            {
+                if (responce.victimCreature == Creature) return;
+
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+
+
+            }
+            if (target == Target.Enemy && !isAlly)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+            if (target == Target.Any)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+            if (target == Target.Me)
+            {
+                if (responce.victimCreature != Creature) return;
+                ApplyEffect();
+            }
+        }
     }
 
+    public void TargetApply()
+    {
+        // если имы ищем ANY эффекты то пропускаем поиск совпаднией, так как ищем все, а в TargetApply попадтю только те, кто наложиоли эффекты
+        if (!request.effect.Contains(GeneratedEnums.EffectId.Any))
+            if (!IsEffect(request.effect, responce.effect)) return;
+
+
+        if (target != Target.None)
+        {
+
+            if (request.neighbours.Count != 0)
+            {
+                // допустим если справа от меня умирает юнит
+                List<GeneratedEnums.DirectionId> reqsetSide = request.neighbours;
+                var sideTargets = GetSideTargets(reqsetSide);
+
+                // теперь надо узнать находятся ли эти юниты в убитых
+                bool isUnitFinded = false;
+                foreach (var unit in sideTargets)
+                {
+                    // responce.killerCreature это убийца victimCreature
+                    if (unit == responce.source)
+                    {
+                        isUnitFinded = true;
+                    }
+                }
+                if (!isUnitFinded) return;
+            }
+
+            var chekedCreature = responce.source;
+            var myTeam = Creature.teamNumber;
+
+            // какая-то цель получила эффект - мы получили ее расу и сравнили с тем, что ищем
+            var isAlly = myTeam == chekedCreature.teamNumber;
+
+            var isFindRace = request.race.Count != 0;
+            var isRace = HasAnyElement(chekedCreature.behaviorProfile.races, request.race);
+
+            if (target == Target.Ally && isAlly)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+            if (target == Target.Enemy && !isAlly)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+            if (target == Target.Any)
+            {
+                if (isFindRace)
+                {
+                    if (isRace)
+                        ApplyEffect();
+                }
+                else
+                {
+                    ApplyEffect();
+                }
+            }
+
+
+        }
+        else
+        {
+            // когда владелец получает эффект и условие соседа
+            // есть ли нужный сосед
+            if (request.neighbours.Count != 0 && !IsNeighbours(request.neighbours, Creature.behaviorRunner.neighbors.allSides)) return;
+
+
+
+            if (responce.destiny == Creature)
+                ApplyEffect();
+        }
+    }
     public void Reflect()
     {
         // если цель это я
@@ -182,6 +377,7 @@ public class Trigger
 
         if (target != Target.None)
         {
+
 
             // есть баг? - если наш тригер "когда враг получает эффект-урон" и этот обьект наносит урон этому обьекту, то появлется бесконечный цикл
             var hittedTarget = responce.destiny;
@@ -231,6 +427,7 @@ public class Trigger
                     ApplyEffect();
                 }
             }
+
 
         }
         else
@@ -284,7 +481,10 @@ public class Trigger
         // Сбрасываем ссылочные типы
         responce.destiny = null;
         responce.source = null;
+        responce.victimCreature = null;
+        responce.killerCreature = null;
 
+        targetFromTrigger = null;
         // Сбрасываем enum в значение по умолчанию
         responce.effectInteraction = Operation.None;
     }
@@ -292,6 +492,7 @@ public class Trigger
     public void ApplyEffect()
     {
         Creature.PrepareUseEffect();
+        targetFromTrigger = responce.killerCreature;
     }
 
     private bool HasIntersection<T>(IEnumerable<T> collection1, IEnumerable<T> collection2)

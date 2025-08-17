@@ -12,9 +12,10 @@ public class CreatureLife : MonoBehaviour
     public Image life;
     [Range(0, 100)]
     public int lifeValue;
-    
+
     [Header("Death State")]
     public bool isDead;
+    private bool isDying;
 
     private void Reset()
     {
@@ -49,7 +50,7 @@ public class CreatureLife : MonoBehaviour
         UpdateFill();
         if (Application.isPlaying)
         {
-            CheckDeath();
+            // CheckDeath();
         }
     }
 
@@ -58,7 +59,7 @@ public class CreatureLife : MonoBehaviour
         maxLife = Mathf.Max(1, max);
         currentLife = Mathf.Clamp(current, 0, maxLife);
         UpdateFill();
-        CheckDeath();
+        // CheckDeath();
     }
 
     private void UpdateFill()
@@ -86,12 +87,12 @@ public class CreatureLife : MonoBehaviour
     }
 
     public GeneratedEnums.EffectId effect;
-    public Creature sources;
+    public Creature myKiller;
     public int valueEffect;
     public void HandleEffect(GeneratedEnums.EffectId effect, Creature sources)
     {
         this.effect = effect;
-        this.sources = sources;
+        this.myKiller = sources;
         FindValueEffectData();
         HandleOffenceData();
         switch (effect)
@@ -131,31 +132,41 @@ public class CreatureLife : MonoBehaviour
 
     public int FindValueEffectData()
     {
-        valueEffect = sources.behaviorProfile.currentRang.rules[0].value.number.value;
+        valueEffect = myKiller.behaviorProfile.currentRang.rules[0].value.number.value;
         return valueEffect;
     }
 
     private void CheckDeath()
     {
-        if (!isDead && currentLife <= 0)
+        if (!isDead && !isDying && currentLife <= 0)
         {
-            isDead = true;
-            UnitDied();
+            UnitEvent.OnUnitDiedsEvent(target, myKiller);
+            StartCoroutine(DelayedDeath());
         }
+    }
+
+    private IEnumerator DelayedDeath()
+    {
+        yield return new WaitForEndOfFrame();
+
+        isDead = true;
+        isDying = true;
+
+        UnitDied();
     }
 
     [Button]
     public void UnitDied()
     {
         if (target == null) return;
-        
-        target.OnDeath(sources);
-        
+
+        target.OnDeath(myKiller);
+
         if (life != null)
         {
             life.enabled = false;
         }
-        
+
         gameObject.SetActive(false);
     }
 
