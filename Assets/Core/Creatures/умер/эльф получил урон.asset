@@ -13,70 +13,28 @@ MonoBehaviour:
   m_Name: "\u044D\u043B\u044C\u0444 \u043F\u043E\u043B\u0443\u0447\u0438\u043B \u0443\u0440\u043E\u043D"
   m_EditorClassIdentifier: 
   id: e3c5b2b19e1864d43b116aaac344ec8e
+  description: 
   image: {fileID: 0}
   size: {x: 1, y: 1}
-  races: 01000000
   attitude: 0
   spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
   name: 123
   currentRang:
     rules:
-    - client: {fileID: 0}
-      Triggers:
-      - behaviour: 1
-        target: 3
-        op: 0
-        groupLogic: 1
-        request:
-          race: 
-          operation: 
-          effectInteraction: 2
-          effect: 02000000
-          stats: 
-          neighbours: 
-          destiny: {fileID: 0}
-          source: {fileID: 0}
-          victimCreature: {fileID: 0}
-          killerCreature: {fileID: 0}
-        responce:
-          race: 
-          operation: 
-          effectInteraction: 0
-          effect: 
-          stats: 
-          neighbours: 
-          destiny: {fileID: 0}
-          source: {fileID: 0}
-          victimCreature: {fileID: 0}
-          killerCreature: {fileID: 0}
-        targetFromTrigger: {fileID: 0}
-        isGetTargetFromTrigger: 0
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
-      effect: 2
-      statistic: 0
-      value:
-        number:
-          value: 5
-        percent:
-          percent: 0
-          target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+    - request: []
+      attackComp:
+        effect: 8
+        stats: 0
+        count:
+          singleValue: 0
+          countCast: 1
+          randomValue: {x: 0, y: 0}
+        target:
+          priority: 0
+          attitude: 0
+          tag: 0
+          position: 0
+          countTarget: 1
     deffence:
       maxHealh:
         stat: 128
@@ -105,62 +63,20 @@ MonoBehaviour:
     isActiveRang: 1
   rangs:
   - rules:
-    - client: {fileID: 0}
-      Triggers:
-      - behaviour: 1
-        target: 3
-        op: 0
-        groupLogic: 1
-        request:
-          race: 
-          operation: 
-          effectInteraction: 2
-          effect: 02000000
-          stats: 
-          neighbours: 
-          destiny: {fileID: 0}
-          source: {fileID: 0}
-          victimCreature: {fileID: 0}
-          killerCreature: {fileID: 0}
-        responce:
-          race: 
-          operation: 
-          effectInteraction: 0
-          effect: 
-          stats: 
-          neighbours: 
-          destiny: {fileID: 0}
-          source: {fileID: 0}
-          victimCreature: {fileID: 0}
-          killerCreature: {fileID: 0}
-        targetFromTrigger: {fileID: 0}
-        isGetTargetFromTrigger: 0
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
-      effect: 2
-      statistic: 0
-      value:
-        number:
-          value: 5
-        percent:
-          percent: 0
-          target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+    - request: []
+      attackComp:
+        effect: 8
+        stats: 0
+        count:
+          singleValue: 0
+          countCast: 1
+          randomValue: {x: 0, y: 0}
+        target:
+          priority: 0
+          attitude: 0
+          tag: 0
+          position: 0
+          countTarget: 1
     deffence:
       maxHealh:
         stat: 128

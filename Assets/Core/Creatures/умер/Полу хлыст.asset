@@ -30,7 +30,7 @@ MonoBehaviour:
         groupLogic: 1
         request:
           race: 
-          operation: 
+          operation: 00000000
           effectInteraction: 1
           effect: 01000000
           stats: 
@@ -62,7 +62,7 @@ MonoBehaviour:
       statistic: 0
       value:
         number:
-          value: 0
+          value: 1
         percent:
           percent: 0
           target:
@@ -114,7 +114,7 @@ MonoBehaviour:
         groupLogic: 1
         request:
           race: 
-          operation: 
+          operation: 00000000
           effectInteraction: 1
           effect: 01000000
           stats: 
@@ -146,7 +146,7 @@ MonoBehaviour:
       statistic: 0
       value:
         number:
-          value: 0
+          value: 1
         percent:
           percent: 0
           target:

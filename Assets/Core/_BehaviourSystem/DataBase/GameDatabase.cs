@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class GameDatabase : ScriptableObject
 {
-    public List<RaceSO> Races = new();
+    public List<TagSO> Tags = new();
     public List<EffectSO> Effects = new();
     public List<ActionSO> Actions = new();
     public List<ModifierSO> Modifiers = new();
@@ -19,7 +19,7 @@ public class GameDatabase : ScriptableObject
     [Button]
     public void ScanAndPopulate()
     {
-        Races.Clear();
+        Tags.Clear();
         Effects.Clear();
         Actions.Clear();
         Modifiers.Clear();
@@ -28,8 +28,8 @@ public class GameDatabase : ScriptableObject
         Stats.Clear();
         Operation.Clear();
 
-        foreach (var race in LoadAllAssets<RaceSO>())
-            Races.Add(race);
+        foreach (var race in LoadAllAssets<TagSO>())
+            Tags.Add(race);
 
         foreach (var effect in LoadAllAssets<EffectSO>())
             Effects.Add(effect);

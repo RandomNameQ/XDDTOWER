@@ -8,7 +8,7 @@ public class CreatureLife : MonoBehaviour
 {
     public int currentLife;
     public int maxLife;
-    public Creature target;
+    public Creature self;
     public Image life;
     [Range(0, 100)]
     public int lifeValue;
@@ -31,14 +31,14 @@ public class CreatureLife : MonoBehaviour
     {
         isDead = false;
         StartCoroutine(ASd());
-        target = GetComponentInChildren<Creature>();
+        self = GetComponentInChildren<Creature>();
         UpdateFill();
     }
     public IEnumerator ASd()
     {
         yield return null;
 
-        maxLife = (int)target.behaviorProfile.currentRang.deffence.maxHealh.baseValue;
+        maxLife = (int)self.behavior.currentRang.deffence.maxHealh.baseValue;
         currentLife = maxLife;
         UpdateFill();
 
@@ -87,12 +87,12 @@ public class CreatureLife : MonoBehaviour
     }
 
     public GeneratedEnums.EffectId effect;
-    public Creature myKiller;
+    public Creature sourceOfEffect;
     public int valueEffect;
     public void HandleEffect(GeneratedEnums.EffectId effect, Creature sources)
     {
         this.effect = effect;
-        this.myKiller = sources;
+        this.sourceOfEffect = sources;
         FindValueEffectData();
         HandleOffenceData();
         switch (effect)
@@ -104,6 +104,9 @@ public class CreatureLife : MonoBehaviour
             case GeneratedEnums.EffectId.Burn:
                 HandleDamageEffect();
                 break;
+            case GeneratedEnums.EffectId.Charge:
+                HandleChargeEffect();
+                break;
 
 
 
@@ -111,11 +114,15 @@ public class CreatureLife : MonoBehaviour
         UpdateFill();
         CheckDeath();
 
-        UnitEvent.OnUnitRecieveEffectEvent(effect, target, sources);
-        UnitEvent.OnUnitAppliedEffectEvent(effect, target, sources);
+        UnitEvent.OnUnitRecieveEffectEvent(effect, self, sources);
+        UnitEvent.OnUnitAppliedEffectEvent(effect, self, sources);
     }
 
 
+    public void HandleChargeEffect()
+    {
+        // self.ChargeCooldown(sourceOfEffect.behaviorProfile.currentRang.rules[0].value.number.value);
+    }
     public void HandleOffenceData()
     {
     }
@@ -132,7 +139,7 @@ public class CreatureLife : MonoBehaviour
 
     public int FindValueEffectData()
     {
-        valueEffect = myKiller.behaviorProfile.currentRang.rules[0].value.number.value;
+        // valueEffect = sourceOfEffect.behaviorProfile.currentRang.rules[0].value.number.value;
         return valueEffect;
     }
 
@@ -140,7 +147,7 @@ public class CreatureLife : MonoBehaviour
     {
         if (!isDead && !isDying && currentLife <= 0)
         {
-            UnitEvent.OnUnitDiedsEvent(target, myKiller);
+            UnitEvent.OnUnitDiedsEvent(self, sourceOfEffect);
             StartCoroutine(DelayedDeath());
         }
     }
@@ -158,9 +165,9 @@ public class CreatureLife : MonoBehaviour
     [Button]
     public void UnitDied()
     {
-        if (target == null) return;
+        if (self == null) return;
 
-        target.OnDeath(myKiller);
+        self.OnDeath(sourceOfEffect);
 
         if (life != null)
         {

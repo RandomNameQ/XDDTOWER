@@ -51,28 +51,43 @@ public static class RegistryEnumGenerator
     {
         var result = new Dictionary<Type, List<RegistryItemSO>>();
 
-        var registryBase = typeof(RegistryItemSO);
-        var allTypes = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .SelectMany(a => SafeGetTypes(a))
-            .Where(t => t != null && t.IsClass && !t.IsAbstract && registryBase.IsAssignableFrom(t))
-            .ToArray();
-
-        foreach (var t in allTypes)
+        // Только те типы, которые используются в GameDatabase.cs
+        var allowedTypeNames = new[]
         {
-            var guids = AssetDatabase.FindAssets($"t:{t.Name}");
+            "TagSO",
+            "EffectSO",
+            "ActionSO",
+            "ModifierSO",
+            "AttitudeSO",
+            "DirectionSO",
+            "StatsSO",
+            "OperatinoSO"
+        };
+
+        foreach (var typeName in allowedTypeNames)
+        {
+            var guids = AssetDatabase.FindAssets($"t:{typeName}");
+            if (guids.Length == 0) continue;
+            
             var list = new List<RegistryItemSO>();
             foreach (var guid in guids)
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                var so = AssetDatabase.LoadAssetAtPath(path, t) as RegistryItemSO;
+                var so = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
                 if (so == null) continue;
-                if (string.IsNullOrEmpty(so.Id)) continue;
-                list.Add(so);
+                
+                // Проверяем, что это нужный тип
+                if (so.GetType().Name != typeName) continue;
+                if (!(so is RegistryItemSO registryItem)) continue;
+                if (string.IsNullOrEmpty(registryItem.Id)) continue;
+                
+                list.Add(registryItem);
             }
             if (list.Count > 0)
             {
-                result[t] = list;
+                // Получаем тип из первого элемента
+                var type = list[0].GetType();
+                result[type] = list;
             }
         }
 

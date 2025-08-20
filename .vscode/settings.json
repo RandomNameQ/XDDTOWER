@@ -12,7 +12,7 @@
         "**/*.userprefs": true,
         "**/*.unityproj": true,
         "**/*.dll": true,
-        "**/*.exe": true,
+        "**/*.exe": false,
         "**/*.pdf": true,
         "**/*.mid": true,
         "**/*.midi": true,

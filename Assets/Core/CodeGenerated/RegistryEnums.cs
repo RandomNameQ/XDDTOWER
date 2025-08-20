@@ -20,25 +20,10 @@ namespace GeneratedEnums
     {
         None = 0,
         Ally = 1 << 0,
-        Enemy = 1 << 1,
-        Me = 1 << 2,
-        Random = 1 << 3,
-    }
-
-    [Flags]
-    public enum CreatureBehaviorProfileId : int
-    {
-        None = 0,
-        ataka = 1 << 0,
-        атака_врага_хил_союзника = 1 << 1,
-        атакую_2_раза_мультикаст = 1 << 2,
-        атакую_2_цели = 1 << 3,
-        механика_хлыста = 1 << 4,
-        отвечаю_если_справа = 1 << 5,
-        отвечаю_когда_поулчаю_урон = 1 << 6,
-        умер = 1 << 7,
-        эльф_получил_урон = 1 << 8,
-        ю_урон_но_хил_союзника = 1 << 9,
+        Any = 1 << 1,
+        Enemy = 1 << 2,
+        Me = 1 << 3,
+        Random = 1 << 4,
     }
 
     [Flags]
@@ -85,23 +70,14 @@ namespace GeneratedEnums
     public enum OperatinoId : int
     {
         None = 0,
-        Buy = 1 << 0,
-        Died = 1 << 1,
-        Improve = 1 << 2,
-        Ressurected = 1 << 3,
-        Sell = 1 << 4,
-        Transform = 1 << 5,
-    }
-
-    [Flags]
-    public enum RaceId : int
-    {
-        None = 0,
-        Elf = 1 << 0,
-        Goblin = 1 << 1,
-        Human = 1 << 2,
-        Orc = 1 << 3,
-        Undead = 1 << 4,
+        ApplyEffect = 1 << 0,
+        Buy = 1 << 1,
+        Died = 1 << 2,
+        Improve = 1 << 3,
+        ReceiveEffect = 1 << 4,
+        Ressurected = 1 << 5,
+        Sell = 1 << 6,
+        Transform = 1 << 7,
     }
 
     [Flags]
@@ -117,6 +93,22 @@ namespace GeneratedEnums
         DodgeChance = 1 << 6,
         MaxHealth = 1 << 7,
         Regeneration = 1 << 8,
+    }
+
+    [Flags]
+    public enum TagId : int
+    {
+        None = 0,
+        Clothes = 1 << 0,
+        Elf = 1 << 1,
+        Food = 1 << 2,
+        Friend = 1 << 3,
+        Goblin = 1 << 4,
+        Human = 1 << 5,
+        Orc = 1 << 6,
+        Tool = 1 << 7,
+        Undead = 1 << 8,
+        Weapon = 1 << 9,
     }
 
 }

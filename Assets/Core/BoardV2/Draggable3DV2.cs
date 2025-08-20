@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -149,15 +150,21 @@ namespace Core.BoardV2
             if (!dragging) return;
             dragging = false;
 
+
             ClearAllPreviews();
+
 
             if (hoverBoard != null)
             {
                 var origin = hasLastSnappedOrigin ? lastSnappedOrigin : hoverBoard.SnapWorldToOrigin(transform.position, placeable.SizeX, placeable.SizeZ);
                 if (hoverBoard.IsAreaFree(origin, placeable.SizeX, placeable.SizeZ))
                 {
+
+
                     if (hoverBoard.TryPlace(placeable, origin))
                     {
+                        // будем считать, что тут карты кладуется на боевой стол
+
                         return;
                     }
                 }
@@ -165,6 +172,8 @@ namespace Core.BoardV2
 
             if (hoverBoard == null)
             {
+
+
                 BoardGridV2 preferred = null;
                 BoardGridV2 secondary = null;
 
@@ -174,16 +183,19 @@ namespace Core.BoardV2
                     {
                         // Из битвы в пустоту -> пробуем инвентарь (НЕ в треш)
                         preferred = BoardRegistryV2.Get(BoardTypeV2.Inventory);
+
                         secondary = null;
                     }
                     else if (originalBoard.BoardType == BoardTypeV2.Inventory)
                     {
                         // Только инвентарь -> треш
+
                         preferred = BoardRegistryV2.GetTrashBoard();
                         secondary = null;
                     }
                     else
                     {
+
                         // Из других столов в пустоту — НЕ в треш
                         preferred = null;
                         secondary = null;
@@ -192,12 +204,14 @@ namespace Core.BoardV2
                 else
                 {
                     // Объект не был на столе — не отправляем в треш
+
                     preferred = null;
                 }
 
                 if (preferred != null)
                 {
                     var free = preferred.FindFirstFreePosition(placeable.SizeX, placeable.SizeZ);
+
                     if (free.x >= 0 && preferred.TryPlace(placeable, free)) return;
                 }
 

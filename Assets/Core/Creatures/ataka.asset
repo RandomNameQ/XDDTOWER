@@ -14,42 +14,106 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: eb5f3d6de665ad901ecab10fadf9706c
   description: 
-  image: {fileID: 0}
-  size: {x: 1, y: 1}
-  races: 01000000
-  attitude: 0
-  spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
-  name: 
   currentRang:
     rules:
-    - client: {fileID: 0}
-      Triggers: []
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
-      effect: 2
-      statistic: 0
-      value:
-        number:
-          value: 1
-        percent:
-          percent: 0
+    - request:
+      - id: 0
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 1
+        operation: 1
+        tag: 2
+        effect: 8
+        position: 132
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
           target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+            priority: 1
+            attitude: 1
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 0
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 4
+        operation: 1
+        tag: 0
+        effect: 4
+        position: 4
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 1
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 0
+        operation: 0
+        tag: 4
+        effect: 0
+        position: 0
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 2
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 0
+        operation: 0
+        tag: 65
+        effect: 0
+        position: 0
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      attackComp:
+        effect: 8
+        stats: 0
+        count:
+          singleValue: 5
+          countCast: 1
+          randomValue: {x: 0, y: 0}
+        target:
+          priority: 1
+          attitude: 4
+          tag: 0
+          position: 0
+          countTarget: 1
     deffence:
       maxHealh:
         stat: 128
@@ -72,40 +136,115 @@ MonoBehaviour:
         baseValue: 1.5
       cooldown:
         stat: 2
-        baseValue: 1
+        baseValue: 1.5
     isInstantActivation: 0
     isPasive: 0
     isActiveRang: 1
+  image: {fileID: 0}
+  size: {x: 1, y: 1}
+  attitude: 0
+  spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
+  name: 
   rangs:
   - rules:
-    - client: {fileID: 0}
-      Triggers: []
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
-      effect: 2
-      statistic: 0
-      value:
-        number:
-          value: 1
-        percent:
-          percent: 0
+    - request:
+      - id: 0
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 1
+        operation: 1
+        tag: 2
+        effect: 8
+        position: 132
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
           target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+            priority: 1
+            attitude: 1
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 0
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 4
+        operation: 1
+        tag: 0
+        effect: 4
+        position: 4
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 1
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 0
+        operation: 0
+        tag: 4
+        effect: 0
+        position: 0
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      - id: 2
+        isOverrideDefaultAttackComp: 0
+        isMainRequest: 0
+        attitude: 0
+        operation: 0
+        tag: 65
+        effect: 0
+        position: 0
+        attackComp:
+          effect: 8
+          stats: 0
+          count:
+            singleValue: 5
+            countCast: 1
+            randomValue: {x: 0, y: 0}
+          target:
+            priority: 1
+            attitude: 4
+            tag: 0
+            position: 0
+            countTarget: 1
+      attackComp:
+        effect: 8
+        stats: 0
+        count:
+          singleValue: 5
+          countCast: 1
+          randomValue: {x: 0, y: 0}
+        target:
+          priority: 1
+          attitude: 4
+          tag: 0
+          position: 0
+          countTarget: 1
     deffence:
       maxHealh:
         stat: 128
@@ -128,7 +267,7 @@ MonoBehaviour:
         baseValue: 1.5
       cooldown:
         stat: 2
-        baseValue: 1
+        baseValue: 1.5
     isInstantActivation: 0
     isPasive: 0
     isActiveRang: 1

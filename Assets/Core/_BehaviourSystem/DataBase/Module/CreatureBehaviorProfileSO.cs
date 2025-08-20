@@ -8,14 +8,16 @@ using UnityEngine;
 public class CreatureBehaviorProfileSO : RegistryItemSO
 {
     // Полный отказ от CreatureSO: профиль самодостаточен
+    public RangRules currentRang;
+
     public Sprite image;
     public Vector2Int size;
-    public List<GeneratedEnums.RaceId> races = new();
+    // public List<GeneratedEnums.TagId> tags = new();
     public GeneratedEnums.AttitudeId attitude;
     public GameObject spellPrefab;
     public new string name;
 
-    public RangRules currentRang;
+
 
     [Serializable]
     public class RangRules
@@ -40,7 +42,6 @@ public class CreatureBehaviorProfileSO : RegistryItemSO
         rangs[0].isActiveRang = true;
         currentRang = rangs[0];
     }
-
     public void ChangeRang()
     {
 

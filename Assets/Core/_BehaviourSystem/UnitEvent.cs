@@ -1,4 +1,5 @@
 using System;
+using GeneratedEnums;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -10,17 +11,15 @@ public static class UnitEvent
         OnUnitDied?.Invoke(destiny, source);
     }
 
-    public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitReceiveEffect;
-    public static void OnUnitRecieveEffectEvent(GeneratedEnums.EffectId effect, Creature destiny, Creature source)
-    {
-        OnUnitReceiveEffect?.Invoke(effect, destiny, source);
-    }
+    public static event Action<EffectId, Creature, Creature> OnUnitReceiveEffect;
+    public static void OnUnitRecieveEffectEvent(EffectId effect, Creature destiny, Creature source) => OnUnitReceiveEffect?.Invoke(effect, destiny, source);
 
-    public static event Action<GeneratedEnums.EffectId, Creature, Creature> OnUnitAppliedEffect;
-    public static void OnUnitAppliedEffectEvent(GeneratedEnums.EffectId effect, Creature destiny, Creature source)
-    {
-        var handler = OnUnitAppliedEffect;
-        handler?.Invoke(effect, destiny, source);
-    }
+    public static event Action<EffectId, Creature, Creature> OnUnitAppliedEffect;
+    public static void OnUnitAppliedEffectEvent(EffectId effect, Creature destiny, Creature source) => OnUnitAppliedEffect?.Invoke(effect, destiny, source);
 
+    public static event Action<Creature> OnUnitSpawnedOnBattlleBoard;
+    public static void OnUnitSpawnedOnBattleBoardEvent(Creature unit) => OnUnitSpawnedOnBattlleBoard?.Invoke(unit);
+
+    public static event Action<Creature> OnUnitRemovedFromBattleBoard;
+    public static void OnUnitRemovedFromBattleBoardEvent(Creature unit) => OnUnitRemovedFromBattleBoard?.Invoke(unit);
 }

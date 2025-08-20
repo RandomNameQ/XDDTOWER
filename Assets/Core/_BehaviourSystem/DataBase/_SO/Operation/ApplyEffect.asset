@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2925e9f135b4154fb9ca1736f7af410, type: 3}
-  m_Name: Buy
+  m_Name: ApplyEffect
   m_EditorClassIdentifier: 
-  id: 831a28f1e8df07c553fcd59546465d13
+  id: 39d5df500b1ee3b9c71a0afdb48355a8
   description: 

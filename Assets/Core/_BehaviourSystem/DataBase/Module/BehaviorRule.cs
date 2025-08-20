@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GeneratedEnums;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -7,43 +8,71 @@ using UnityEngine;
 public class BehaviorRule
 {
 
-    [HideInInspector, SerializeReference]
-    public Creature client;
-
-    [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]
-    public List<Trigger> Triggers = new();
-
-    public Target Target;
 
 
-    [SerializeReference]
-    public GeneratedEnums.EffectId effect;
-    public GeneratedEnums.StatsId statistic;
-    public Value value;
-
-    public List<Action> eventsChain = new();
+    // [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]
+    // public List<Trigger> Triggers = new();
 
 
-    public void Initialize(Creature ownerCreature)
+
+
+    public class EffectContainer
     {
-        client = ownerCreature;
-        if (Triggers != null)
+        public AttackComp attackComp;
+        public StatsId stats;
+    }
+    [Serializable]
+    public class AttackComp
+    {
+        public EffectId effect = EffectId.Damage;
+        public StatsId stats;
+        public Count count;
+        public Target target;
+
+        [Serializable]
+        public class Count
         {
-            foreach (var t in Triggers)
+            public int singleValue = 5;
+            public int countCast = 1;
+            public Vector2Int randomValue;
+        }
+        [Serializable]
+        public class Target
+        {
+            public enum Priority
             {
-                t?.Initialize(this);
-                t?.Subscribe();
+                None,
+                ClosePosition,
+                FarPosition,
+                MinimumHealth,
+                MaximumHealth
             }
+            public Priority priority = Priority.ClosePosition;
+            public AttitudeId attitude = AttitudeId.Enemy;
+            public TagId tag;
+            public DirectionId position;
+            public int countTarget = 1;
         }
     }
 
-    public void Unsubscribe()
+    [Serializable]
+    [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]
+
+    public class Request
     {
-        if (Triggers == null) return;
-        foreach (var t in Triggers)
-        {
-            t?.Unsubscribe();
-        }
+        // если id одинаковый, то мы считаем это за or условие
+        public bool isOverrideDefaultAttackComp;
+        public AttitudeId attitude;
+        public OperatinoId operation;
+        public TagId tag;
+        public EffectId effect;
+        public DirectionId position;
+        public AttackComp attackComp;
+
     }
 
+
+    public List<Request> request = new();
+    public AttackComp attackComp;
+    public List<EffectContainer> effectContainer = new();
 }

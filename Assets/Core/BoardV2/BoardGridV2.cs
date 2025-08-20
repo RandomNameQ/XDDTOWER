@@ -197,6 +197,7 @@ namespace Core.BoardV2
             if (objectsParent == null) objectsParent = transform;
             obj.transform.SetParent(objectsParent, true);
             obj.CurrentBoard = this;
+            obj.gameObject.BroadcastMessage("OnBoardChanged", boardType, SendMessageOptions.DontRequireReceiver);
             obj.OriginCell = originCell;
             OnObjectPlaced?.Invoke(obj, originCell);
             NotifyNeighborsChanged(obj);

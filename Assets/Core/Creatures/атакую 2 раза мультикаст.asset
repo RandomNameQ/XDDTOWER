@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28e7f756a55ac18459b0277a474e44dc, type: 3}
   m_Name: "\u0430\u0442\u0430\u043A\u0443\u044E 2 \u0440\u0430\u0437\u0430 \u043C\u0443\u043B\u044C\u0442\u0438\u043A\u0430\u0441\u0442"
   m_EditorClassIdentifier: 
-  id: eb5f3d6de665ad901ecab10fadf9706c
+  id: 9254c9749ff6065a8c74d413985d8e30
+  description: 
   image: {fileID: 0}
   size: {x: 1, y: 1}
-  races: 01000000
   attitude: 0
   spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
   name: 
@@ -23,32 +23,9 @@ MonoBehaviour:
     rules:
     - client: {fileID: 0}
       Triggers: []
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
       effect: 2
       statistic: 0
-      value:
-        number:
-          value: 5
-        percent:
-          percent: 0
-          target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+      request: []
     deffence:
       maxHealh:
         stat: 128
@@ -79,32 +56,9 @@ MonoBehaviour:
   - rules:
     - client: {fileID: 0}
       Triggers: []
-      Target:
-        attitude: 2
-        distance: 4
-        race: 0
-        direction: 0
-        maxTargets: 1
       effect: 2
       statistic: 0
-      value:
-        number:
-          value: 5
-        percent:
-          percent: 0
-          target:
-            attitude: 2
-            distance: 4
-            race: 0
-            direction: 0
-            maxTargets: 1
-          effect:
-            effect: {fileID: 0}
-          statistic:
-            stat: {fileID: 0}
-            operation: 0
-        random:
-          random: {x: 0, y: 0}
+      request: []
     deffence:
       maxHealh:
         stat: 128

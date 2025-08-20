@@ -7,7 +7,6 @@ public class CreatureSO : ScriptableObject
 {
     public Sprite image;
     public Vector2Int size;
-    public GeneratedEnums.RaceId race;
 
     public enum Rangs
     {
