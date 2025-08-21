@@ -51,9 +51,9 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
     {
         foreach (var req in requests)
         {
-            var c = req.client;
-            if (c == client)
+            if (req.client == client)
             {
+                req.behaviour = rule;
                 return;
             }
         }
@@ -82,7 +82,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
     public void UnitRecieveEffect(EffectId effect, Creature destiny, Creature source)
     {
-        Response responce = null;
+        Response responce = new Response();
         responce.operation = OperatinoId.ReceiveEffect;
         responce.destiny = destiny;
         responce.effect = effect;
@@ -95,7 +95,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
     public void UnitApplyEffect(EffectId effect, Creature destiny, Creature source)
     {
-        Response responce = null;
+        Response responce = new Response();
         responce.operation = OperatinoId.ApplyEffect;
         responce.destiny = destiny;
         responce.effect = effect;
@@ -109,7 +109,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
     public void UnitDie(Creature destiny, Creature source)
     {
-        Response responce = null;
+        Response responce = new Response();
         responce.operation = OperatinoId.Died;
         responce.destiny = destiny;
         responce.source = source;
@@ -146,28 +146,19 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
     public bool RequestVerification(Creature client, BehaviorRule.Request request)
     {
-        // все енамы во флаге это AND
-        // все реквесты это OR
         foreach (Response response in responses)
         {
-            // если false то значит например request damage, а в responce heal
             if (!CheckEffectAndOperation(request, response)) continue;
 
-            // дальше нам необхожимо найти цель, которая описана в request
-            // это требуется, чтобы найти race, attitude и прочие
-            // чтобы найти цель требуется сначала узенать attitude и operation
-            // attitude указывает на то искать цель у врагов или союзников
-            // operation указывает на то что будет является целью soruce или destiny
-
-
             Creature target = FindTarget(client, response, request);
-            if (target == null) return false;
+            if (target == null) continue;
 
-            if (!target.behavior.tag.HasFlag(request.tag.value)) return false;
-
+            if (!target.behavior.tag.HasFlag(request.tag.value)) continue;
+            
+            return true;
         }
 
-        return true;
+        return false;
     }
 
 
@@ -208,7 +199,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
         if (client == null || client.behaviorRunner == null)
             return false;
 
-        var targets = client.behaviorRunner.TryGetCreaturesInDirections(request.position.value, out found);
+        var targets = client.behaviorRunner.TryGetCreaturesInDirections(request.side.value, out found);
 
         return targets;
     }
@@ -265,41 +256,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
     public void FullFillEnums(List<BehaviorRule.Request> allRulesRequests)
     {
-        // // Все записи сгруппированные по ID (одинаковые ID вместе)
-        // List<BehaviorRule.Request> andReq = allRulesRequests
-        //     .GroupBy(rule => rule.id)
-        //     .Where(group => group.Count() > 1) // только группы с одинаковыми ID
-        //     .SelectMany(group => group)
-        //     .ToList();
-
-        // // Все записи с уникальными ID (не повторяющиеся)
-        // List<BehaviorRule.Request> orReq = allRulesRequests
-        //     .GroupBy(rule => rule.id)
-        //     .Where(group => group.Count() == 1) // только уникальные ID
-        //     .SelectMany(group => group)
-        //     .ToList();
-
-        // Debug.Log(orReq.Count);
-        // andEnums = new StoredEnums();
-        // orEnums = new StoredEnums();
-
-        // foreach (var r in andReq)
-        // {
-        //     andEnums.attitude |= r.attitude;
-        //     andEnums.operation |= r.operation;
-        //     andEnums.tag |= r.tag;
-        //     andEnums.effect |= r.effect;
-        //     andEnums.position |= r.position;
-        // }
-
-        // foreach (var r in orReq)
-        // {
-        //     orEnums.attitude |= r.attitude;
-        //     orEnums.operation |= r.operation;
-        //     orEnums.tag |= r.tag;
-        //     orEnums.effect |= r.effect;
-        //     orEnums.position |= r.position;
-        // }
+        // Метод для будущей реализации логики группировки правил
     }
 
 

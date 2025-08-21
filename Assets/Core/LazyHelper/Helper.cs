@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace LazyHelper
@@ -60,6 +61,24 @@ namespace LazyHelper
             }
 
             return count;
+        }
+
+        // Конвертация enum flag в список элементов
+        public static List<TEnum> GetFlagsList<TEnum>(this TEnum flags) where TEnum : Enum
+        {
+            var result = new List<TEnum>();
+            var allValues = Enum.GetValues(typeof(TEnum));
+
+            foreach (var value in allValues)
+            {
+                TEnum enumValue = (TEnum)value;
+                if (flags.ContainsFlag(enumValue))
+                {
+                    result.Add(enumValue);
+                }
+            }
+
+            return result;
         }
 
         

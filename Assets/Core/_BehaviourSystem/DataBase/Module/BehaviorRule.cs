@@ -64,18 +64,42 @@ public class BehaviorRule
         public bool isOverrideDefaultAttackComp;
 
         [Serializable]
+        [TableList(AlwaysExpanded = true, DrawScrollView = false)]
+        [InlineProperty]
         public class BoolContainer<T>
         {
             public bool isActivated;
+            [EnumToggleButtons]
+            [HideLabel]
+            [GUIColor(0.85f, 1f, 0.85f)]
+
             public T value;
         }
-
+        [HideLabel]
+        [BoxGroup("Attitude", centerLabel: true)]
         public BoolContainer<AttitudeId> attitude;
+
+        [BoxGroup("Operation", centerLabel: true)]
+        [HideLabel]
+
         public BoolContainer<OperatinoId> operation;
+        [BoxGroup("Tag", centerLabel: true)]
+        [HideLabel]
+
         public BoolContainer<TagId> tag;
+        [BoxGroup("Tag Target", centerLabel: true)]
+        [HideLabel]
+
         public BoolContainer<TagId> tagTarget;
+        [BoxGroup("Effect", centerLabel: true)]
+        [HideLabel]
+
         public BoolContainer<EffectId> effect;
-        public BoolContainer<DirectionId> position;
+        [HideLabel]
+        [BoxGroup("Position", centerLabel: true)]
+        public BoolContainer<DirectionId> side;
+        [HideLabel]
+        [BoxGroup("Attack Comp", centerLabel: true)]
         public BoolContainer<AttackComp> attackComp;
 
     }

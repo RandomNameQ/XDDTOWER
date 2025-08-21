@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28e7f756a55ac18459b0277a474e44dc, type: 3}
-  m_Name: ataka
+  m_Name: test
   m_EditorClassIdentifier: 
-  id: eb5f3d6de665ad901ecab10fadf9706c
+  id: 098f6bcd4621d373cade4e832627b4f6
   description: 
   currentRang:
     rules:
@@ -20,22 +20,22 @@ MonoBehaviour:
       - isOverrideDefaultAttackComp: 0
         attitude:
           isActivated: 0
-          value: 0
+          value: 1
         operation:
           isActivated: 0
           value: 0
         tag:
           isActivated: 0
-          value: 0
+          value: 2
         tagTarget:
           isActivated: 0
           value: 0
         effect:
           isActivated: 0
           value: 0
-        position:
+        side:
           isActivated: 0
-          value: 0
+          value: 24
         attackComp:
           isActivated: 0
           value:
@@ -102,22 +102,22 @@ MonoBehaviour:
       - isOverrideDefaultAttackComp: 0
         attitude:
           isActivated: 0
-          value: 0
+          value: 1
         operation:
           isActivated: 0
           value: 0
         tag:
           isActivated: 0
-          value: 0
+          value: 2
         tagTarget:
           isActivated: 0
           value: 0
         effect:
           isActivated: 0
           value: 0
-        position:
+        side:
           isActivated: 0
-          value: 0
+          value: 24
         attackComp:
           isActivated: 0
           value:

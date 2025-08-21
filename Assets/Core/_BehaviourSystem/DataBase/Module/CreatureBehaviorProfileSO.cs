@@ -9,7 +9,8 @@ public class CreatureBehaviorProfileSO : RegistryItemSO
 {
     // Полный отказ от CreatureSO: профиль самодостаточен
     public RangRules currentRang;
-
+    [AssetList]
+    [PreviewField(70, ObjectFieldAlignment.Center)]
     public Sprite image;
     public Vector2Int size;
     // public List<GeneratedEnums.TagId> tags = new();
