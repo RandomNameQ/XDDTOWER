@@ -19,12 +19,11 @@ MonoBehaviour:
     - request:
       - id: 0
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 1
-        operation: 1
+        operation: 17
         tag: 2
         effect: 8
-        position: 132
+        position: 4
         attackComp:
           effect: 8
           stats: 0
@@ -40,7 +39,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 0
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 4
         operation: 1
         tag: 0
@@ -61,7 +59,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 1
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 0
         operation: 0
         tag: 4
@@ -82,7 +79,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 2
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 0
         operation: 0
         tag: 65
@@ -150,12 +146,11 @@ MonoBehaviour:
     - request:
       - id: 0
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 1
-        operation: 1
+        operation: 17
         tag: 2
         effect: 8
-        position: 132
+        position: 4
         attackComp:
           effect: 8
           stats: 0
@@ -171,7 +166,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 0
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 4
         operation: 1
         tag: 0
@@ -192,7 +186,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 1
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 0
         operation: 0
         tag: 4
@@ -213,7 +206,6 @@ MonoBehaviour:
             countTarget: 1
       - id: 2
         isOverrideDefaultAttackComp: 0
-        isMainRequest: 0
         attitude: 0
         operation: 0
         tag: 65

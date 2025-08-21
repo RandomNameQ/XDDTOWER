@@ -42,8 +42,8 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
         public EffectId effect;
         public DirectionId position;
     }
-    public StoredEnums andEnums;
-    public StoredEnums orEnums;
+    // public StoredEnums andEnums;
+    // public StoredEnums orEnums;
 
     public List<RequestBehaviour> requests = new();
     public List<Response> responses = new();
@@ -144,107 +144,161 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
         ClearData();
     }
 
-    public void RequestVerification(Creature client, BehaviorRule.Request request)
+    public bool RequestVerification(Creature client, BehaviorRule.Request request)
     {
-        foreach (Response responce in responses)
+        // все енамы во флаге это AND
+        // все реквесты это OR
+        foreach (Response response in responses)
         {
+            // если false то значит например request damage, а в responce heal
+            if (!CheckEffectAndOperation(request, response)) continue;
 
-            if (CheckOrEnums(responce) || CheckAndEnums(responce))
-            {
-                FindTarget(client, responce);
-            }
+            // дальше нам необхожимо найти цель, которая описана в request
+            // это требуется, чтобы найти race, attitude и прочие
+            // чтобы найти цель требуется сначала узенать attitude и operation
+            // attitude указывает на то искать цель у врагов или союзников
+            // operation указывает на то что будет является целью soruce или destiny
+
+
+            Creature target = FindTarget(client, response, request);
+            if (target == null) return false;
+
+            if (!target.behavior.tag.HasFlag(request.tag)) return false;
+
         }
 
-        // у нас есить клиент и вперую очередь нам необходимо найти обьекты, которые соответствуют position, attitude
+        return true;
     }
 
-    public Creature FindTarget(Creature client, Response response)
+
+
+
+    public Creature FindTarget(Creature client, Response response, BehaviorRule.Request request)
     {
-        var team = client.teamNumber;
+        var clientTeam = client.teamNumber;
+        var destintyTeam = response.destiny.teamNumber;
+        var sourceTeam = response.source.teamNumber;
+
+        // для союзников нужно еще сделать проверку на позицию слева справ и етк
 
 
-        Creature target = null;
 
-        // if (andEnums.attitude.HasFlag(AttitudeId.Ally))
+        if (request.attitude.ContainsFlag(AttitudeId.Enemy) && request.operation.ContainsFlag(OperatinoId.ApplyEffect))
+            if (sourceTeam != clientTeam) return response.source;
+
+        if (request.attitude.ContainsFlag(AttitudeId.Enemy) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
+            if (destintyTeam != clientTeam) return response.destiny;
+
+        // для союзников еще надо определить - позицию. но у меня может быть выбрано несколько значений
+        DetectSideCreature(client, response.destiny, request);
+        // если выбрана position left то мне надо получить таргет слева от клиента и если это найдены обьект совпадает с sourceTeam, то true
+        if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ApplyEffect))
+            if (sourceTeam == clientTeam) return response.source;
+
+        if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
+            if (destintyTeam == clientTeam) return response.destiny;
+
+        return null;
+    }
+
+
+    private bool DetectSideCreature(Creature client, Creature neighbor, BehaviorRule.Request request)
+    {
+        foreach (var item in request.position)
+        {
+
+        }
+        var targets = client.behaviorRunner.GetCreaturesInDirection();
+        return true;
+    }
+
+
+    public bool CheckEffectAndOperation(BehaviorRule.Request request, Response response)
+    {
+        if (!Helper.ContainsAllFlags(request.effect, response.effect))
+            return false;
+
+        if (!Helper.ContainsAllFlags(request.operation, response.operation))
+            return false;
+
+        // если выбрано 1+ енам, то значит истинно, если все енамы совпали
+        // if (Helper.GetActiveFlagsCount(request.effect) > 1)
         // {
+
         // }
-        // допустим 5 врагов выстрелило с эффектом и операуцией
-        // теперь надо отсортировать по остальным условиям
+        // else
+        // {
+        //     if (!Helper.ContainsMyFlags(request.effect, response.effect))
+        //         return false;
+        // }
 
-        if (orEnums.operation.HasFlag(OperatinoId.ApplyEffect))
-        {
-            target = response.source;
-        }
-        if (andEnums.operation.HasFlag(OperatinoId.ApplyEffect))
-        {
 
-        }
-        if (andEnums.operation.HasFlag(OperatinoId.ReceiveEffect))
-        {
-            target = response.destiny;
-        }
-        if (andEnums.attitude.HasFlag(AttitudeId.Enemy))
-        {
-            target = response.source;
-        }
+        // if (Helper.GetActiveFlagsCount(request.operation) > 1)
+        // {
 
-        return target;
-    }
-
-    public bool CheckOrEnums(Response response)
-    {
-        if (!Helper.HasAnyFlag(response.effect, orEnums.effect)) return false;
-        if (!Helper.HasAnyFlag(response.operation, orEnums.operation)) return false;
-
+        // }
+        // else
+        // {
+        //     if (!Helper.ContainsMyFlags(request.operation, response.operation))
+        //         return false;
+        // }
 
         return true;
     }
-    public bool CheckAndEnums(Response response)
-    {
-        if (!Helper.HasAllFlags(response.effect, andEnums.effect)) return false;
-        if (!Helper.HasAllFlags(response.operation, andEnums.operation)) return false;
+    // public bool CheckOrEnums(Response response)
+    // {
+    //     if (!Helper.HasAnyFlag(response.effect, orEnums.effect)) return false;
+    //     if (!Helper.HasAnyFlag(response.operation, orEnums.operation)) return false;
 
 
-        return true;
-    }
+    //     return true;
+    // }
+    // public bool CheckAndEnums(Response response)
+    // {
+    //     if (!Helper.HasAllFlags(response.effect, andEnums.effect)) return false;
+    //     if (!Helper.HasAllFlags(response.operation, andEnums.operation)) return false;
+
+
+    //     return true;
+    // }
 
     public void FullFillEnums(List<BehaviorRule.Request> allRulesRequests)
     {
-        // Все записи сгруппированные по ID (одинаковые ID вместе)
-        List<BehaviorRule.Request> andReq = allRulesRequests
-            .GroupBy(rule => rule.id)
-            .Where(group => group.Count() > 1) // только группы с одинаковыми ID
-            .SelectMany(group => group)
-            .ToList();
+        // // Все записи сгруппированные по ID (одинаковые ID вместе)
+        // List<BehaviorRule.Request> andReq = allRulesRequests
+        //     .GroupBy(rule => rule.id)
+        //     .Where(group => group.Count() > 1) // только группы с одинаковыми ID
+        //     .SelectMany(group => group)
+        //     .ToList();
 
-        // Все записи с уникальными ID (не повторяющиеся)
-        List<BehaviorRule.Request> orReq = allRulesRequests
-            .GroupBy(rule => rule.id)
-            .Where(group => group.Count() == 1) // только уникальные ID
-            .SelectMany(group => group)
-            .ToList();
+        // // Все записи с уникальными ID (не повторяющиеся)
+        // List<BehaviorRule.Request> orReq = allRulesRequests
+        //     .GroupBy(rule => rule.id)
+        //     .Where(group => group.Count() == 1) // только уникальные ID
+        //     .SelectMany(group => group)
+        //     .ToList();
 
-        Debug.Log(orReq.Count);
-        andEnums = new StoredEnums();
-        orEnums = new StoredEnums();
+        // Debug.Log(orReq.Count);
+        // andEnums = new StoredEnums();
+        // orEnums = new StoredEnums();
 
-        foreach (var r in andReq)
-        {
-            andEnums.attitude |= r.attitude;
-            andEnums.operation |= r.operation;
-            andEnums.tag |= r.tag;
-            andEnums.effect |= r.effect;
-            andEnums.position |= r.position;
-        }
+        // foreach (var r in andReq)
+        // {
+        //     andEnums.attitude |= r.attitude;
+        //     andEnums.operation |= r.operation;
+        //     andEnums.tag |= r.tag;
+        //     andEnums.effect |= r.effect;
+        //     andEnums.position |= r.position;
+        // }
 
-        foreach (var r in orReq)
-        {
-            orEnums.attitude |= r.attitude;
-            orEnums.operation |= r.operation;
-            orEnums.tag |= r.tag;
-            orEnums.effect |= r.effect;
-            orEnums.position |= r.position;
-        }
+        // foreach (var r in orReq)
+        // {
+        //     orEnums.attitude |= r.attitude;
+        //     orEnums.operation |= r.operation;
+        //     orEnums.tag |= r.tag;
+        //     orEnums.effect |= r.effect;
+        //     orEnums.position |= r.position;
+        // }
     }
 
 

@@ -17,6 +17,7 @@ public class CreatureBehaviorProfileSO : RegistryItemSO
     public GameObject spellPrefab;
     public new string name;
 
+    public GeneratedEnums.TagId tag;
 
 
     [Serializable]

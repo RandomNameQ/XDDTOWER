@@ -174,7 +174,7 @@ public class BehaviorRunner : MonoBehaviour
                 if (item is Component comp)
                 {
                     var c = comp.GetComponent<Creature>();
-                    if (c != null) 
+                    if (c != null)
                     {
                         var directionId = ConvertDirectionToDirectionId(dirSuffix);
                         if (directionId != GeneratedEnums.DirectionId.None)
@@ -193,7 +193,7 @@ public class BehaviorRunner : MonoBehaviour
         {
             if (neighbor == null) return;
             var c = neighbor.GetComponent<Creature>();
-            if (c != null) 
+            if (c != null)
             {
                 // Добавляем направление ALL, так как у нас есть существо в этом направлении
                 list.Add(GeneratedEnums.DirectionId.ALL);
@@ -229,25 +229,25 @@ public class BehaviorRunner : MonoBehaviour
             // Добавляем направления, где есть соседи
             if (_owner.neighbors.left.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Left);
-            
+
             if (_owner.neighbors.right.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Right);
-            
+
             if (_owner.neighbors.front.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Front);
-            
+
             if (_owner.neighbors.back.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.Back);
-            
+
             if (_owner.neighbors.frontLeft.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.FrontLeft);
-            
+
             if (_owner.neighbors.frontRight.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.FrontRight);
-            
+
             if (_owner.neighbors.backLeft.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.BackLeft);
-            
+
             if (_owner.neighbors.backRight.Count > 0)
                 _owner.neighbors.allSides.Add(GeneratedEnums.DirectionId.BackRight);
         }
@@ -365,7 +365,7 @@ public class BehaviorRunner : MonoBehaviour
     private void Update()
     {
         if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) return;
-        
+
         _neighborsLogic?.UpdateIfNeeded();
     }
 
@@ -383,7 +383,7 @@ public class BehaviorRunner : MonoBehaviour
     public void UpdateNeighbors()
     {
         if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) return;
-        
+
         _neighborsLogic?.UpdateNeighbors();
     }
 
@@ -392,44 +392,19 @@ public class BehaviorRunner : MonoBehaviour
     /// </summary>
     public List<Creature> GetCreaturesInDirection(GeneratedEnums.DirectionId direction)
     {
-        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) 
-            return new List<Creature>();
-            
-        var result = new List<Creature>();
-        if (neighbors == null) return result;
-
-        var directionList = GetDirectionList(direction);
-        if (directionList != null && directionList.Count > 0)
-        {
-            var placeable = GetPlaceableComponent(gameObject);
-            if (placeable != null)
-            {
-                var dirSuffix = ConvertDirectionIdToString(direction);
-                if (!string.IsNullOrEmpty(dirSuffix))
-                {
-                    var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
-                    if (neighbor != null)
-                    {
-                        var creature = neighbor.GetComponent<Creature>();
-                        if (creature != null && (creature.creatureLife == null || !creature.creatureLife.isDead))
-                        {
-                            result.Add(creature);
-                        }
-                    }
-                }
-            }
-        }
-        return result;
+        return GetCreaturesInDirections(direction);
     }
+
+   
 
     /// <summary>
     /// Простой метод для получения существ по направлению стороны.
     /// </summary>
     public List<Creature> GetCreaturesByDirection(GeneratedEnums.DirectionId direction)
     {
-        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead) 
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead)
             return new List<Creature>();
-            
+
         var result = new List<Creature>();
         if (neighbors == null) return result;
 
@@ -448,8 +423,90 @@ public class BehaviorRunner : MonoBehaviour
                 result.Add(creature);
             }
         }
-        
+
         return result;
+    }
+
+    /// <summary>
+    /// Получить существ во всех направлениях, указанных во флагах. Поддерживает как одиночные значения, так и комбинации, а также ALL.
+    /// </summary>
+    public List<Creature> GetCreaturesInDirections(GeneratedEnums.DirectionId directions)
+    {
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead)
+            return new List<Creature>();
+
+        var placeable = GetPlaceableComponent(gameObject);
+        if (placeable == null)
+            return new List<Creature>();
+
+        var result = new List<Creature>();
+        var unique = new HashSet<Creature>();
+
+        foreach (var dir in ExpandDirections(directions))
+        {
+            var dirSuffix = ConvertDirectionIdToString(dir);
+            if (string.IsNullOrEmpty(dirSuffix))
+                continue;
+
+            var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
+            if (neighbor == null)
+                continue;
+
+            var creature = neighbor.GetComponent<Creature>();
+            if (creature == null)
+                continue;
+
+            if (creature.creatureLife != null && creature.creatureLife.isDead)
+                continue;
+
+            if (unique.Add(creature))
+            {
+                result.Add(creature);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Разворачивает набор флагов направлений в перечисление конкретных направлений.
+    /// Для значения ALL возвращает все восемь направлений.
+    /// </summary>
+    private IEnumerable<GeneratedEnums.DirectionId> ExpandDirections(GeneratedEnums.DirectionId directions)
+    {
+        if (directions == GeneratedEnums.DirectionId.None)
+            yield break;
+
+        // ALL: все направления
+        if ((directions & GeneratedEnums.DirectionId.ALL) != 0)
+        {
+            yield return GeneratedEnums.DirectionId.Left;
+            yield return GeneratedEnums.DirectionId.Right;
+            yield return GeneratedEnums.DirectionId.Front;
+            yield return GeneratedEnums.DirectionId.Back;
+            yield return GeneratedEnums.DirectionId.FrontLeft;
+            yield return GeneratedEnums.DirectionId.FrontRight;
+            yield return GeneratedEnums.DirectionId.BackLeft;
+            yield return GeneratedEnums.DirectionId.BackRight;
+            yield break;
+        }
+
+        if ((directions & GeneratedEnums.DirectionId.Left) != 0)
+            yield return GeneratedEnums.DirectionId.Left;
+        if ((directions & GeneratedEnums.DirectionId.Right) != 0)
+            yield return GeneratedEnums.DirectionId.Right;
+        if ((directions & GeneratedEnums.DirectionId.Front) != 0)
+            yield return GeneratedEnums.DirectionId.Front;
+        if ((directions & GeneratedEnums.DirectionId.Back) != 0)
+            yield return GeneratedEnums.DirectionId.Back;
+        if ((directions & GeneratedEnums.DirectionId.FrontLeft) != 0)
+            yield return GeneratedEnums.DirectionId.FrontLeft;
+        if ((directions & GeneratedEnums.DirectionId.FrontRight) != 0)
+            yield return GeneratedEnums.DirectionId.FrontRight;
+        if ((directions & GeneratedEnums.DirectionId.BackLeft) != 0)
+            yield return GeneratedEnums.DirectionId.BackLeft;
+        if ((directions & GeneratedEnums.DirectionId.BackRight) != 0)
+            yield return GeneratedEnums.DirectionId.BackRight;
     }
 
     /// <summary>
