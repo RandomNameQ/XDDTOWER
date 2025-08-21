@@ -62,12 +62,21 @@ public class BehaviorRule
     {
         // если id одинаковый, то мы считаем это за or условие
         public bool isOverrideDefaultAttackComp;
-        public AttitudeId attitude;
-        public OperatinoId operation;
-        public TagId tag;
-        public EffectId effect;
-        public DirectionId position;
-        public AttackComp attackComp;
+
+        [Serializable]
+        public class BoolContainer<T>
+        {
+            public bool isActivated;
+            public T value;
+        }
+
+        public BoolContainer<AttitudeId> attitude;
+        public BoolContainer<OperatinoId> operation;
+        public BoolContainer<TagId> tag;
+        public BoolContainer<TagId> tagTarget;
+        public BoolContainer<EffectId> effect;
+        public BoolContainer<DirectionId> position;
+        public BoolContainer<AttackComp> attackComp;
 
     }
 

@@ -163,7 +163,7 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
             Creature target = FindTarget(client, response, request);
             if (target == null) return false;
 
-            if (!target.behavior.tag.HasFlag(request.tag)) return false;
+            if (!target.behavior.tag.HasFlag(request.tag.value)) return false;
 
         }
 
@@ -181,47 +181,45 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
 
         // для союзников нужно еще сделать проверку на позицию слева справ и етк
 
+        List<Creature> targets = new();
 
-
-        if (request.attitude.ContainsFlag(AttitudeId.Enemy) && request.operation.ContainsFlag(OperatinoId.ApplyEffect))
+        if (request.attitude.value.ContainsFlag(AttitudeId.Enemy) && request.operation.value.ContainsFlag(OperatinoId.ApplyEffect))
             if (sourceTeam != clientTeam) return response.source;
 
-        if (request.attitude.ContainsFlag(AttitudeId.Enemy) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
+        if (request.attitude.value.ContainsFlag(AttitudeId.Enemy) && request.operation.value.ContainsFlag(OperatinoId.ReceiveEffect))
             if (destintyTeam != clientTeam) return response.destiny;
 
 
-        if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ApplyEffect))
-            if (sourceTeam == clientTeam && !IsHaveTargetInSide(client, response.source, request)) return response.source;
+        if (request.attitude.value.ContainsFlag(AttitudeId.Ally) && request.operation.value.ContainsFlag(OperatinoId.ApplyEffect))
+            if (sourceTeam == clientTeam && !IsHaveTargetInSide(client, request, out targets, response.source))
+                if (targets.Contains(response.source) && Helper.ContainsFlag(response.source.behavior.tag, request.tag.value)) return response.source;
 
-        if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
-            if (destintyTeam == clientTeam && !IsHaveTargetInSide(client, response.destiny, request)) return response.destiny;
+
+        if (request.attitude.value.ContainsFlag(AttitudeId.Ally) && request.operation.value.ContainsFlag(OperatinoId.ReceiveEffect))
+            if (destintyTeam == clientTeam && !IsHaveTargetInSide(client, request, out targets, response.destiny))
+                if (targets.Contains(response.destiny) && Helper.ContainsFlag(response.destiny.behavior.tag, request.tag.value)) return response.destiny;
 
         return null;
     }
 
-    // должно вернуть true если обькты со стороны нашлись.
-    // если же обьекты нашлись только у одной стороны, а запрашивается несколько, то false Должен быть
-    private bool IsHaveTargetInSide(Creature client, Creature neighbor, BehaviorRule.Request request)
-    {
-        return IsHaveTargetInSide(client, request, out _);
-    }
-
-    private bool IsHaveTargetInSide(Creature client, BehaviorRule.Request request, out List<Creature> found)
+    private bool IsHaveTargetInSide(Creature client, BehaviorRule.Request request, out List<Creature> found, Creature target)
     {
         found = new List<Creature>();
         if (client == null || client.behaviorRunner == null)
             return false;
 
-        return client.behaviorRunner.TryGetCreaturesInDirections(request.position, out found);
+        var targets = client.behaviorRunner.TryGetCreaturesInDirections(request.position.value, out found);
+
+        return targets;
     }
 
 
     public bool CheckEffectAndOperation(BehaviorRule.Request request, Response response)
     {
-        if (!Helper.ContainsAllFlags(request.effect, response.effect))
+        if (!Helper.ContainsAllFlags(request.effect.value, response.effect))
             return false;
 
-        if (!Helper.ContainsAllFlags(request.operation, response.operation))
+        if (!Helper.ContainsAllFlags(request.operation.value, response.operation))
             return false;
 
         // если выбрано 1+ енам, то значит истинно, если все енамы совпали
