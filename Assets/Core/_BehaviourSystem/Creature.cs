@@ -84,269 +84,38 @@ public class Creature : MonoBehaviour
     public void UpdateRequestState()
     {
         if (isNeedStopRequestStateUpdate) return;
-        
-        // Проверяем все правила поведения для активного ранга
+        // надо узнать есть ли в стороне обьекты и если есть, то какой tag - все это надо сравнивать
         foreach (var rule in FindActiveRang().rules)
         {
             foreach (BehaviorRule.Request request in rule.request)
             {
-                // Проверяем условия для активации правила
-                if (CheckRequestConditions(request))
+                // выясняем где надо узнать "есть ли сосед"
+                // получаем лист сторон где надо узнать
+                List<GeneratedEnums.DirectionId> sides = Helper.GetFlagsList(request.side.value);
+
+                int numberCreatureWithSide = 0;
+                List<Creature> neighbor = new();
+                // получаем обьекты, которые размещены в сторонах
+                foreach (GeneratedEnums.DirectionId side in sides)
                 {
-                    // Применяем эффект, если все условия выполнены
-                    ApplyRuleEffect(rule, request);
+                    neighbor = behaviorRunner.GetCreaturesInDirection(side);
+                    if (neighbor.Count == 0) continue; // соседей с этой стороны нет
+                    numberCreatureWithSide++;
+                }
+                // если количество количество request сторон совпадает с кол-во найденных обьектов из сторон, то значит мы искали 3 стороны и нашли 3 обьекта
+                // если ищем 3 стороны, а нашли 2 обьекта = false
+                // если ищем 1 сторону, а нашли 2 обьекта, то странненько
+                if (numberCreatureWithSide > sides.Count) Debug.Log("странное поведение");
+
+                // и совершаем проверку на race если надо
+                if (sides.Count == numberCreatureWithSide)
+                {
+                    if (Helper.ContainsFlag(GeneratedEnums.TagId.None, request.tag))
+                    {
+
+                    }
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// Проверяет все условия Request для активации правила
-    /// </summary>
-    private bool CheckRequestConditions(BehaviorRule.Request request)
-    {
-        // Проверяем количество соседей по требуемым сторонам
-        if (!CheckNeighborCount(request)) return false;
-        
-        // Проверяем отношение к соседям (враг/союзник)
-        if (!CheckAttitudeCondition(request)) return false;
-        
-        // Проверяем требуемые теги
-        if (!CheckTagConditions(request)) return false;
-        
-        // Проверяем требуемые операции
-        if (!CheckOperationCondition(request)) return false;
-        
-        return true;
-    }
-
-    /// <summary>
-    /// Проверяет количество соседей по требуемым сторонам
-    /// </summary>
-    private bool CheckNeighborCount(BehaviorRule.Request request)
-    {
-        // Получаем список сторон, где нужно проверить наличие соседей
-        List<GeneratedEnums.DirectionId> sides = Helper.GetFlagsList(request.side.value);
-        
-        int numberCreatureWithSide = 0;
-        List<Creature> neighbor = new();
-        
-        // Подсчитываем количество сторон с соседями
-        foreach (GeneratedEnums.DirectionId side in sides)
-        {
-            neighbor = behaviorRunner.GetCreaturesInDirection(side);
-            if (neighbor.Count == 0) continue; // Соседей с этой стороны нет
-            numberCreatureWithSide++;
-        }
-        
-        // Проверяем корректность: количество найденных соседей не должно превышать количество требуемых сторон
-        if (numberCreatureWithSide > sides.Count) 
-        {
-            Debug.LogWarning($"Странное поведение: найдено {numberCreatureWithSide} соседей для {sides.Count} требуемых сторон");
-            return false;
-        }
-        
-        // Условие выполнено, если количество сторон с соседями совпадает с требуемым
-        return sides.Count == numberCreatureWithSide;
-    }
-
-    /// <summary>
-    /// Проверяет условие отношения к соседям (враг/союзник)
-    /// </summary>
-    private bool CheckAttitudeCondition(BehaviorRule.Request request)
-    {
-        if (!request.attitude.isActivated) return true; // Условие не активировано
-        
-        // Получаем всех соседей по всем направлениям
-        var allNeighbors = GetAllNeighbors();
-        
-        foreach (var neighbor in allNeighbors)
-        {
-            // Проверяем отношение к каждому соседу
-            if (!CheckAttitudeToCreature(neighbor, request.attitude.value))
-            {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-
-    /// <summary>
-    /// Проверяет теговые условия
-    /// </summary>
-    private bool CheckTagConditions(BehaviorRule.Request request)
-    {
-        // Проверяем тег самого существа
-        if (request.tag.isActivated)
-        {
-            if (!Helper.ContainsFlag(request.tag.value, behavior.tag))
-            {
-                return false;
-            }
-        }
-        
-        // Проверяем теги целей
-        if (request.tagTarget.isActivated)
-        {
-            var allNeighbors = GetAllNeighbors();
-            bool hasValidTarget = false;
-            
-            foreach (var neighbor in allNeighbors)
-            {
-                if (Helper.ContainsFlag(request.tagTarget.value, neighbor.behavior.tag))
-                {
-                    hasValidTarget = true;
-                    break;
-                }
-            }
-            
-            if (!hasValidTarget) return false;
-        }
-        
-        return true;
-    }
-
-    /// <summary>
-    /// Проверяет условие операции
-    /// </summary>
-    private bool CheckOperationCondition(BehaviorRule.Request request)
-    {
-        if (!request.operation.isActivated) return true; // Условие не активировано
-        
-        // Здесь можно добавить логику проверки операций
-        // Например, проверка состояния существа, эффектов и т.д.
-        
-        return true;
-    }
-
-    /// <summary>
-    /// Получает всех соседей по всем направлениям
-    /// </summary>
-    private List<Creature> GetAllNeighbors()
-    {
-        var allNeighbors = new List<Creature>();
-        var directions = System.Enum.GetValues(typeof(GeneratedEnums.DirectionId));
-        
-        foreach (GeneratedEnums.DirectionId direction in directions)
-        {
-            var neighbors = behaviorRunner.GetCreaturesInDirection(direction);
-            allNeighbors.AddRange(neighbors);
-        }
-        
-        return allNeighbors;
-    }
-
-    /// <summary>
-    /// Проверяет отношение к конкретному существу
-    /// </summary>
-    private bool CheckAttitudeToCreature(Creature target, GeneratedEnums.AttitudeId requiredAttitude)
-    {
-        if (target == null) return false;
-        
-        switch (requiredAttitude)
-        {
-            case GeneratedEnums.AttitudeId.Enemy:
-                return target.teamNumber != this.teamNumber;
-            case GeneratedEnums.AttitudeId.Ally:
-                return target.teamNumber == this.teamNumber;
-            case GeneratedEnums.AttitudeId.Me:
-                return target == this;
-            case GeneratedEnums.AttitudeId.Any:
-                return true;
-            case GeneratedEnums.AttitudeId.None:
-                return true;
-            default:
-                return true;
-        }
-    }
-
-    /// <summary>
-    /// Применяет эффект правила, если все условия выполнены
-    /// </summary>
-    private void ApplyRuleEffect(BehaviorRule rule, BehaviorRule.Request request)
-    {
-        // Проверяем, есть ли компонент атаки для применения эффекта
-        if (rule.attackComp != null)
-        {
-            // Применяем эффект через существующую систему
-            if (request.attackComp.isActivated && request.attackComp.value != null)
-            {
-                ApplyAttackEffect(request.attackComp.value);
-            }
-            else
-            {
-                ApplyAttackEffect(rule.attackComp);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Применяет эффект атаки к целям
-    /// </summary>
-    private void ApplyAttackEffect(BehaviorRule.AttackComp attackComp)
-    {
-        // Находим цели согласно настройкам
-        var targets = FindTargetsForAttack(attackComp.target);
-        
-        foreach (var target in targets)
-        {
-            if (target != null && target.creatureLife != null)
-            {
-                // Применяем эффект к цели
-                target.creatureLife.HandleEffect(attackComp.effect, this);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Находит цели для атаки согласно настройкам
-    /// </summary>
-    private List<Creature> FindTargetsForAttack(BehaviorRule.AttackComp.Target targetSettings)
-    {
-        var targets = new List<Creature>();
-        var allNeighbors = GetAllNeighbors();
-        
-        // Фильтруем по отношению
-        var filteredTargets = allNeighbors.Where(neighbor => 
-            CheckAttitudeToCreature(neighbor, targetSettings.attitude)).ToList();
-        
-        // Фильтруем по тегу
-        if (targetSettings.tag != GeneratedEnums.TagId.None)
-        {
-            filteredTargets = filteredTargets.Where(neighbor => 
-                Helper.ContainsFlag(targetSettings.tag, neighbor.behavior.tag)).ToList();
-        }
-        
-        // Применяем приоритет выбора
-        filteredTargets = ApplyTargetPriority(filteredTargets, targetSettings.priority);
-        
-        // Ограничиваем количество целей
-        int targetCount = Mathf.Min(targetSettings.countTarget, filteredTargets.Count);
-        targets.AddRange(filteredTargets.Take(targetCount));
-        
-        return targets;
-    }
-
-    /// <summary>
-    /// Применяет приоритет выбора целей
-    /// </summary>
-    private List<Creature> ApplyTargetPriority(List<Creature> targets, BehaviorRule.AttackComp.Target.Priority priority)
-    {
-        if (targets.Count <= 1) return targets;
-        
-        switch (priority)
-        {
-            case BehaviorRule.AttackComp.Target.Priority.ClosePosition:
-                return targets.OrderBy(t => Vector3.Distance(transform.position, t.transform.position)).ToList();
-            case BehaviorRule.AttackComp.Target.Priority.FarPosition:
-                return targets.OrderByDescending(t => Vector3.Distance(transform.position, t.transform.position)).ToList();
-            case BehaviorRule.AttackComp.Target.Priority.MinimumHealth:
-                return targets.OrderBy(t => t.creatureLife?.currentLife ?? 0).ToList();
-            case BehaviorRule.AttackComp.Target.Priority.MaximumHealth:
-                return targets.OrderByDescending(t => t.creatureLife?.currentLife ?? 0).ToList();
-            default:
-                return targets;
         }
     }
 
