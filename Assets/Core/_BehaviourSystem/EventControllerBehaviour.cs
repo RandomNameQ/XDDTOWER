@@ -189,27 +189,30 @@ public class EventControllerBehaviour : Singleton<EventControllerBehaviour>
         if (request.attitude.ContainsFlag(AttitudeId.Enemy) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
             if (destintyTeam != clientTeam) return response.destiny;
 
-        // для союзников еще надо определить - позицию. но у меня может быть выбрано несколько значений
-        DetectSideCreature(client, response.destiny, request);
-        // если выбрана position left то мне надо получить таргет слева от клиента и если это найдены обьект совпадает с sourceTeam, то true
+
         if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ApplyEffect))
-            if (sourceTeam == clientTeam) return response.source;
+            if (sourceTeam == clientTeam && !IsHaveTargetInSide(client, response.source, request)) return response.source;
 
         if (request.attitude.ContainsFlag(AttitudeId.Ally) && request.operation.ContainsFlag(OperatinoId.ReceiveEffect))
-            if (destintyTeam == clientTeam) return response.destiny;
+            if (destintyTeam == clientTeam && !IsHaveTargetInSide(client, response.destiny, request)) return response.destiny;
 
         return null;
     }
 
-
-    private bool DetectSideCreature(Creature client, Creature neighbor, BehaviorRule.Request request)
+    // должно вернуть true если обькты со стороны нашлись.
+    // если же обьекты нашлись только у одной стороны, а запрашивается несколько, то false Должен быть
+    private bool IsHaveTargetInSide(Creature client, Creature neighbor, BehaviorRule.Request request)
     {
-        foreach (var item in request.position)
-        {
+        return IsHaveTargetInSide(client, request, out _);
+    }
 
-        }
-        var targets = client.behaviorRunner.GetCreaturesInDirection();
-        return true;
+    private bool IsHaveTargetInSide(Creature client, BehaviorRule.Request request, out List<Creature> found)
+    {
+        found = new List<Creature>();
+        if (client == null || client.behaviorRunner == null)
+            return false;
+
+        return client.behaviorRunner.TryGetCreaturesInDirections(request.position, out found);
     }
 
 

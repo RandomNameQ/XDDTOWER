@@ -398,36 +398,6 @@ public class BehaviorRunner : MonoBehaviour
    
 
     /// <summary>
-    /// Простой метод для получения существ по направлению стороны.
-    /// </summary>
-    public List<Creature> GetCreaturesByDirection(GeneratedEnums.DirectionId direction)
-    {
-        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead)
-            return new List<Creature>();
-
-        var result = new List<Creature>();
-        if (neighbors == null) return result;
-
-        var placeable = GetPlaceableComponent(gameObject);
-        if (placeable == null) return result;
-
-        var dirSuffix = ConvertDirectionIdToString(direction);
-        if (string.IsNullOrEmpty(dirSuffix)) return result;
-
-        var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
-        if (neighbor != null)
-        {
-            var creature = neighbor.GetComponent<Creature>();
-            if (creature != null && (creature.creatureLife == null || !creature.creatureLife.isDead))
-            {
-                result.Add(creature);
-            }
-        }
-
-        return result;
-    }
-
-    /// <summary>
     /// Получить существ во всех направлениях, указанных во флагах. Поддерживает как одиночные значения, так и комбинации, а также ALL.
     /// </summary>
     public List<Creature> GetCreaturesInDirections(GeneratedEnums.DirectionId directions)
@@ -466,6 +436,51 @@ public class BehaviorRunner : MonoBehaviour
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Проверяет, что во всех указанных направлениях есть существа, и возвращает их список.
+    /// Возвращает true только если каждое направление из флагов содержит хотя бы одно существо.
+    /// </summary>
+    public bool TryGetCreaturesInDirections(GeneratedEnums.DirectionId directions, out List<Creature> creatures)
+    {
+        creatures = new List<Creature>();
+        if (_self != null && _self.creatureLife != null && _self.creatureLife.isDead)
+            return false;
+
+        var placeable = GetPlaceableComponent(gameObject);
+        if (placeable == null)
+            return false;
+
+        var unique = new HashSet<Creature>();
+        var requiredDirections = new List<GeneratedEnums.DirectionId>(ExpandDirections(directions));
+        if (requiredDirections.Count == 0)
+            return false;
+
+        foreach (var dir in requiredDirections)
+        {
+            var dirSuffix = ConvertDirectionIdToString(dir);
+            if (string.IsNullOrEmpty(dirSuffix))
+                return false;
+
+            var neighbor = CallNeighbor(placeable, "GetNeighbor" + dirSuffix);
+            if (neighbor == null)
+                return false;
+
+            var creature = neighbor.GetComponent<Creature>();
+            if (creature == null)
+                return false;
+
+            if (creature.creatureLife != null && creature.creatureLife.isDead)
+                return false;
+
+            if (unique.Add(creature))
+            {
+                creatures.Add(creature);
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
