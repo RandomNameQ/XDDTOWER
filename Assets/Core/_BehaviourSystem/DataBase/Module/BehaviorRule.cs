@@ -56,16 +56,18 @@ public class BehaviorRule
     }
 
     [Serializable]
-    [ListDrawerSettings(ShowFoldout = true, DraggableItems = true, ShowIndexLabels = true)]
 
     public class Request
     {
         // если id одинаковый, то мы считаем это за or условие
         public bool isOverrideDefaultAttackComp;
+        public bool isActivated;
+        public bool isShowAll;
 
         [Serializable]
         [TableList(AlwaysExpanded = true, DrawScrollView = false)]
         [InlineProperty]
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public class BoolContainer<T>
         {
             public bool isActivated;
@@ -77,34 +79,40 @@ public class BehaviorRule
         }
         [HideLabel]
         [BoxGroup("Attitude", centerLabel: true)]
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<AttitudeId> attitude;
 
         [BoxGroup("Operation", centerLabel: true)]
         [HideLabel]
-
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<OperatinoId> operation;
         [BoxGroup("Tag", centerLabel: true)]
         [HideLabel]
-
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<TagId> tag;
         [BoxGroup("Tag Target", centerLabel: true)]
         [HideLabel]
-
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<TagId> tagTarget;
         [BoxGroup("Effect", centerLabel: true)]
         [HideLabel]
-
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<EffectId> effect;
         [HideLabel]
         [BoxGroup("Position", centerLabel: true)]
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<DirectionId> side;
         [HideLabel]
         [BoxGroup("Attack Comp", centerLabel: true)]
+        [ShowIf("@isActivated || isOverrideDefaultAttackComp")]
         public BoolContainer<AttackComp> attackComp;
 
     }
 
 
+
+    [FoldoutGroup("Behavior Requests", expanded: true)]
+    [ListDrawerSettings(ShowIndexLabels = true)]
     public List<Request> request = new();
     public AttackComp attackComp;
     public List<EffectContainer> effectContainer = new();

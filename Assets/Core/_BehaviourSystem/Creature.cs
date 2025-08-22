@@ -25,6 +25,7 @@ public class Creature : MonoBehaviour
     public BehaviorRunner behaviorRunner;
     public Image cooldownBar;
     public Image image;
+    public bool isNeedCreateCloneSO;
 
     public enum TeamNumber
     {
@@ -45,6 +46,16 @@ public class Creature : MonoBehaviour
         InitSelfComp();
     }
 
+    private void OnEnable()
+    {
+        UnitEvent.OnUnitChangePositionOnBoard += UpdateRequest;
+
+    }
+    private void OnDisable()
+    {
+        UnitEvent.OnUnitChangePositionOnBoard -= UpdateRequest;
+
+    }
     public void OnBoardChanged(BoardTypeV2 newBoard)
     {
         board = newBoard;
@@ -52,7 +63,22 @@ public class Creature : MonoBehaviour
         if (board == BoardTypeV2.Battle) UnitEvent.OnUnitSpawnedOnBattleBoardEvent(this);
         else UnitEvent.OnUnitRemovedFromBattleBoardEvent(this);
 
+        ResetData();
+        UnitEvent.OnUnitChangePositionOnBoardEvent();
+        UpdateRequest();
+    }
+    [Button]
+    public void UpdateRequest()
+    {
+        StartCoroutine(DelayedUpdateRequestState());
+    }
+
+
+    private IEnumerator DelayedUpdateRequestState()
+    {
+        yield return null;
         UpdateRequestState();
+        Debug.Log(gameObject.name);
     }
 
     public void InitSelfComp()
@@ -66,6 +92,19 @@ public class Creature : MonoBehaviour
         InitCooldownTimer();
 
         SendDataToEventBehaviour();
+        ResetData();
+    }
+    public void ResetData()
+    {
+        var rang = FindActiveRang();
+        foreach (var rule in rang.rules)
+        {
+            foreach (var req in rule.request)
+            {
+                req.side.isActivated = false;
+                req.tag.isActivated = false;
+            }
+        }
     }
 
     public CreatureBehaviorProfileSO.RangRules FindActiveRang()
@@ -80,43 +119,71 @@ public class Creature : MonoBehaviour
     }
 
     public bool isNeedStopRequestStateUpdate;
-    [Button]
     public void UpdateRequestState()
     {
         if (isNeedStopRequestStateUpdate) return;
-        // надо узнать есть ли в стороне обьекты и если есть, то какой tag - все это надо сравнивать
         foreach (var rule in FindActiveRang().rules)
         {
             foreach (BehaviorRule.Request request in rule.request)
             {
-                // выясняем где надо узнать "есть ли сосед"
-                // получаем лист сторон где надо узнать
-                List<GeneratedEnums.DirectionId> sides = Helper.GetFlagsList(request.side.value);
-
-                int numberCreatureWithSide = 0;
-                List<Creature> neighbor = new();
-                // получаем обьекты, которые размещены в сторонах
-                foreach (GeneratedEnums.DirectionId side in sides)
-                {
-                    neighbor = behaviorRunner.GetCreaturesInDirection(side);
-                    if (neighbor.Count == 0) continue; // соседей с этой стороны нет
-                    numberCreatureWithSide++;
-                }
-                // если количество количество request сторон совпадает с кол-во найденных обьектов из сторон, то значит мы искали 3 стороны и нашли 3 обьекта
-                // если ищем 3 стороны, а нашли 2 обьекта = false
-                // если ищем 1 сторону, а нашли 2 обьекта, то странненько
-                if (numberCreatureWithSide > sides.Count) Debug.Log("странное поведение");
-
-                // и совершаем проверку на race если надо
-                if (sides.Count == numberCreatureWithSide)
-                {
-                    if (Helper.ContainsFlag(GeneratedEnums.TagId.None, request.tag))
-                    {
-
-                    }
-                }
+                ProcessRequest(request);
             }
         }
+    }
+
+    private void ProcessRequest(BehaviorRule.Request request)
+    {
+        var neighbors = GetNeighborsInRequestedSides(request.side.value);
+        if (neighbors.Count == 0) return;
+
+        CheckPositionRequirements(request.side.value, neighbors.Count, request);
+        CheckTagRequirements(request.tag.value, neighbors, request);
+
+    }
+
+    private List<Creature> GetNeighborsInRequestedSides(GeneratedEnums.DirectionId sides)
+    {
+        List<Creature> neighbors = new();
+        List<GeneratedEnums.DirectionId> sideList = Helper.GetFlagsList(sides);
+
+        foreach (GeneratedEnums.DirectionId side in sideList)
+        {
+            neighbors.AddRange(behaviorRunner.GetCreaturesInDirection(side));
+        }
+
+        return neighbors;
+    }
+
+    private void CheckPositionRequirements(GeneratedEnums.DirectionId requestedSides, int neighborCount, BehaviorRule.Request request)
+    {
+        List<GeneratedEnums.DirectionId> sideList = Helper.GetFlagsList(requestedSides);
+
+        if (neighborCount > sideList.Count)
+        {
+
+            Debug.Log("странное поведение: найдено больше соседей чем запрошено сторон");
+            return;
+        }
+
+        if (neighborCount == sideList.Count) request.side.isActivated = true;
+    }
+
+    private void CheckTagRequirements(GeneratedEnums.TagId requestedTags, List<Creature> neighbors, BehaviorRule.Request request)
+    {
+        if (Helper.ContainsFlag(GeneratedEnums.TagId.None, requestedTags))
+            return;
+
+
+        int matchingTagCount = 0;
+
+        foreach (Creature neighbor in neighbors)
+        {
+            if (Helper.ContainsAllFlags(neighbor.behavior.tag, requestedTags))
+            {
+                matchingTagCount++;
+            }
+        }
+        if (matchingTagCount == neighbors.Count) request.tag.isActivated = true;
     }
 
     private void InitCooldownTimer()
@@ -133,6 +200,7 @@ public class Creature : MonoBehaviour
 
     private void CreatCloneFromBeh()
     {
+        if (!isNeedCreateCloneSO) return;
         var clone = Instantiate(behavior);
         behavior = clone;
     }

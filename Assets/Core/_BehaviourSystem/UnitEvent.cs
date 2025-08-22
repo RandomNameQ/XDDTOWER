@@ -22,4 +22,9 @@ public static class UnitEvent
 
     public static event Action<Creature> OnUnitRemovedFromBattleBoard;
     public static void OnUnitRemovedFromBattleBoardEvent(Creature unit) => OnUnitRemovedFromBattleBoard?.Invoke(unit);
+
+    public static event Action OnUnitChangePositionOnBoard;
+    public static void OnUnitChangePositionOnBoardEvent() => OnUnitChangePositionOnBoard?.Invoke();
+
+
 }

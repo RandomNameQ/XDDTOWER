@@ -34,8 +34,42 @@ MonoBehaviour:
           isActivated: 0
           value: 0
         side:
+          isActivated: 1
+          value: 128
+        attackComp:
           isActivated: 0
-          value: 24
+          value:
+            effect: 8
+            stats: 0
+            count:
+              singleValue: 5
+              countCast: 1
+              randomValue: {x: 0, y: 0}
+            target:
+              priority: 1
+              attitude: 4
+              tag: 0
+              position: 0
+              countTarget: 1
+      - isOverrideDefaultAttackComp: 0
+        attitude:
+          isActivated: 0
+          value: 0
+        operation:
+          isActivated: 0
+          value: 0
+        tag:
+          isActivated: 0
+          value: 0
+        tagTarget:
+          isActivated: 0
+          value: 0
+        effect:
+          isActivated: 0
+          value: 0
+        side:
+          isActivated: 0
+          value: 0
         attackComp:
           isActivated: 0
           value:
@@ -95,7 +129,7 @@ MonoBehaviour:
   attitude: 0
   spellPrefab: {fileID: 6882985031714920381, guid: a1bbdb9504acd824e9d9e88f50e09e06, type: 3}
   name: 
-  tag: 0
+  tag: 28
   rangs:
   - rules:
     - request:
@@ -116,8 +150,42 @@ MonoBehaviour:
           isActivated: 0
           value: 0
         side:
+          isActivated: 1
+          value: 128
+        attackComp:
           isActivated: 0
-          value: 24
+          value:
+            effect: 8
+            stats: 0
+            count:
+              singleValue: 5
+              countCast: 1
+              randomValue: {x: 0, y: 0}
+            target:
+              priority: 1
+              attitude: 4
+              tag: 0
+              position: 0
+              countTarget: 1
+      - isOverrideDefaultAttackComp: 0
+        attitude:
+          isActivated: 0
+          value: 0
+        operation:
+          isActivated: 0
+          value: 0
+        tag:
+          isActivated: 0
+          value: 0
+        tagTarget:
+          isActivated: 0
+          value: 0
+        effect:
+          isActivated: 0
+          value: 0
+        side:
+          isActivated: 0
+          value: 0
         attackComp:
           isActivated: 0
           value:

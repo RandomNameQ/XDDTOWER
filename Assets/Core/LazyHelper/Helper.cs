@@ -21,18 +21,18 @@ namespace LazyHelper
         }
 
         // Проверка, что source содержит ХОТЯ БЫ ОДИН флаг из flags
-        // public static bool ContainsAnyFlag<TEnum>(this TEnum source, TEnum flags)
-        //     where TEnum : Enum
-        // {
-        //     ulong sourceValue = Convert.ToUInt64(source);
-        //     ulong flagsValue = Convert.ToUInt64(flags);
+        public static bool ContainsAnyFlag<TEnum>(this TEnum source, TEnum flags)
+            where TEnum : Enum
+        {
+            ulong sourceValue = Convert.ToUInt64(source);
+            ulong flagsValue = Convert.ToUInt64(flags);
 
-        //     // Если оба None - возвращаем true
-        //     if (sourceValue == 0 && flagsValue == 0)
-        //         return true;
+            // Если оба None - возвращаем true
+            if (sourceValue == 0 && flagsValue == 0)
+                return true;
 
-        //     return (sourceValue & flagsValue) != 0;
-        // }
+            return (sourceValue & flagsValue) != 0;
+        }
 
 
         // Проверка, что source содержит конкретный флаг
@@ -81,7 +81,7 @@ namespace LazyHelper
             return result;
         }
 
-        
+
     }
 }
 
